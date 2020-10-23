@@ -1,5 +1,4 @@
 ---
-# <!-- << YAML Header for including Meta data in Markdown document >> -->
 title: Game README document
 version: v0.0
 team-name: JustBroken
@@ -15,7 +14,7 @@ organization: University of Utah (UofU)
   course: 
     id: CS3500
     name: Software Practice
-...
+---
 <!-- << HTML Header for html stuff >> -->
 
 
