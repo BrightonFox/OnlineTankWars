@@ -1,0 +1,29 @@
+{
+    /**
+     * This is a list of recomended vscode extentions to have when workign with this project.
+     * Listed in the order of usefulness and imprtance.
+     * With comments describing what each one does.
+     *  (not that you'll be able to easily see the comments as the lsit shows up in a different interface entierly)
+     */
+    
+    "recommendations": [
+        "ms-dotnettools.csharp",                    //<< Must have for C# development (this is microsoft's provided C# language server [an implimentation of Omnisharp]).
+        "fernandoescolar.vscode-solution-explorer", //<< Must have for C# development using teh MS build system (the system used by normal visual studio with `.sln`'s).
+        "formulahendry.dotnet-test-explorer",       //<< Used to run and show the results of .NET unit tests.
+        "streetsidesoftware.code-spell-checker",    //<< Code spell Checker a must have in any situation, it works great! (`ctrl+.` to bring up sudjestions).
+        "k--kato.docomment",                        //<< Used to auto insert XML comments with the appropriate XML feilds (no autocomple after generation though).
+        "ms-vsliveshare.vsliveshare",               //<< Liveshare support to VS code w/ aditional IM chat system integration (need seperate extention for voice chat intigration)
+        "aaron-bond.better-comments",               //<< Used to customize collor and higlighting for comments using contextual markers (defined in the `settings.json`).
+        "bierner.markdown-preview-github-styles",   //<< Sets your markdown theme to be as identical to what is displayed on github as possible.
+        "visualstudioexptteam.vscodeintellicode",   //<< Better and adaptive intellisense provided by AI generated algorithms. (ALL OF THE BUZZ-WORDS!)
+        "fudge.auto-using",                         //<< Used to insert the appropriate `using <namespace>` lines when trying to use an item nut currently accessable to you.
+        "selcukermaya.se-csproj-extensions",        //<< Language support for `.csproj` files really usefull!
+        "donjayamanne.githistory",                  //<< Additional supprot for git by addinggit history pages with all sorts fo options for integrating with git on a particualr file!
+        "christian-kohler.path-intellisense",       //<< Adds intellisense for file paths, as well as allowing you to open file paths and URL's from string representations.
+        "redhat.vscode-xml",                        //<< XML language server/support for vscode. Must have java installed and a java path set somewhere (see extension documentation: https://marketplace.visualstudio.com/items?itemName=redhat.vscode-xml) 
+        "koehlma.markdown-math",                    //<< Adds support for LaTeX/TeX math notation in markdown (i.e. `$...$`/`$$...$$`) using KaTeX (one of the few things supported by github but not vscode out of the box).
+        "bierner.markdown-emoji",                   //<< Adds emoji support for markdown as supported in github markdown (i.e. `:...:` [same notation as in discord but with githubs emoji names]). 
+        "kevinkyang.auto-comment-blocks",           //<< Used to auto insert multiline comment formmating (like the `/**...` javaDoc style) when your language server does not support it out of the box (like the C# language server)
+        
+    ]
+}

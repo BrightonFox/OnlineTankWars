@@ -1,0 +1,214 @@
+{
+    //<<================================================================================================>>//
+    //<<                                            (GEN):                                              >>//
+    //<<                                     General Functionality                                      >>//
+    //<<                                           Settings                                             >>//
+    //<<================================================================================================>>//
+
+
+
+
+    //<<================================================================================================>>//
+    //<<                                           (Gen):                                               >>//
+    //<<                                            git                                                 >>//
+    //<<                                          Settings                                              >>//
+    //<<================================================================================================>>//
+    "git.enableSmartCommit": true,
+
+
+
+    //<<================================================================================================>>//
+    //<<                                            (EXT):                                              >>//
+    //<<                                       Better Comments                                          >>//
+    //<<                                          Settings                                              >>//
+    //<<================================================================================================>>//
+
+        //- Better Comments Settings:
+        "better-comments.multilineComments": true,
+        "better-comments.highlightPlainText": true,
+
+        //- Better Comments Tag Settings:
+        "better-comments.tags": [
+            {
+            "tag": "?",
+            "color": "#02972780",
+            "strikethrough": false,
+            "backgroundColor": "transparent"
+            },
+            {
+            "tag": "-",
+            "color": "#029727",
+            "strikethrough": false,
+            "backgroundColor": "#1A2337C2"
+            },
+            // {
+            //   "tag": "\u0020",      
+            //   "color": "#029727",
+            //   "strikethrough": false,
+            //   "backgroundColor": "#1A2327A0"
+            // },
+            {
+            "tag": "//",
+            "color": "#029727",
+            "strikethrough": true,
+            "backgroundColor": "transparent"
+            },
+            {
+            "tag": "todo",
+            "color": "#FF8C00",
+            "strikethrough": false,
+            "backgroundColor": "transparent"
+            },
+            {
+            "tag": "TODO:",
+            "color": "#FF8C00",
+            "strikethrough": false,
+            "backgroundColor": "transparent"
+            },
+            {
+            "tag": "<<",
+            "color": "#FF8C00",
+            "strikethrough": false,
+            "backgroundColor": "#1A2327D8"
+            },
+            {
+            "tag": "^^^^",
+            "color": "#FF8C00",
+            "strikethrough": false,
+            "backgroundColor": "#1A2327D8"
+            },
+            {
+            "tag": "->",
+            "color": "#FF8C00",
+            "strikethrough": false,
+            "backgroundColor": "transparent"
+            },
+            {
+            "tag": "*",
+            "color": "#98C379",
+            "strikethrough": false,
+            "backgroundColor": "transparent"
+            },
+            {
+            "tag": "!DEBUG",
+            "color": "#a0c1fd63",
+            "strikethrough": true,
+            "backgroundColor": "transparent"
+            },
+            {
+            "tag": "DEBUG!",
+            "color": "#a0c1fd63",
+            "strikethrough": true,
+            "backgroundColor": "transparent"
+            },
+            {
+            "tag": "DEBUG:!",
+            "color": "#a0c1fd63",
+            "strikethrough": true,
+            "backgroundColor": "transparent"
+            },
+            {
+            "tag": "DEBUG",
+            "color": "#AAAAAA",
+            "strikethrough": false,
+            "backgroundColor": "#FF290f7a"
+            },
+            {
+            "tag": "X!",
+            "color": "#a0c1fd63",
+            "strikethrough": true,
+            "backgroundColor": "transparent"
+            },
+            {
+            "tag": "!X",
+            "color": "#a0c1fd63",
+            "strikethrough": true,
+            "backgroundColor": "transparent"
+            },
+            {
+            "tag": "!",
+            "color": "#FF290f",
+            "strikethrough": false,
+            "backgroundColor": "transparent"
+            },
+            // {
+            //   "tag": "+",
+            //   "color": "#029727",
+            //   "strikethrough": false,
+            //   "backgroundColor": "transparent"
+            // },
+        ],
+
+
+    //<<================================================================================================>>//
+    //<<                                            (EXT):                                              >>//
+    //<<                                        Spell Checker                                           >>//
+    //<<                                           Settings                                             >>//
+    //<<================================================================================================>>//
+        // Spell Checker Personal Dictionaly
+        "cSpell.words": [
+            "Assgn",
+            "Kopta",
+            "OSTER",
+            "OSTERHOUTAN",
+            "Oster",
+            "Osterhout",
+            "Osterhoutan",
+            "assgn",
+            "disp",
+            "isdigit",
+            "oster",
+            "osterhoutan"
+        ],
+
+        "cSpell.userWords": [
+            "GUIs",
+            "Galifrax",
+            "Initializable",
+            "Junit",
+            "Minecraft",
+            "Multivariable",
+            "Osterhout",
+            "Prioritizable",
+            "Roleplay",
+            "Schneiter",
+            "acsii",
+            "colorstr",
+            "dataset",
+            "dependee",
+            "diagonalization",
+            "displaystyle",
+            "emsp",
+            "ensp",
+            "gibbins",
+            "gitignore",
+            "indeterminates",
+            "ipynb",
+            "ipython",
+            "isalnum",
+            "isdigit",
+            "jupyter",
+            "monospace",
+            "multithreading",
+            "snipits",
+            "spedo",
+            "strftime",
+            "sympy",
+            "tcolorbox",
+            "themeing",
+            "unittest",
+            "vals",
+            "vectorspace",
+            "vscode",
+            "vscode's",
+        ],
+
+
+    //<<================================================================================================>>//
+    //<<                                                                                                >>//
+    //<<                                             Misc.                                              >>//
+    //<<                                                                                                >>//
+    //<<================================================================================================>>//
+
+
+}
