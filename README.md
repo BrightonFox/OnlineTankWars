@@ -14,7 +14,7 @@ organization: University of Utah (UofU)
   course: 
     id: CS3500
     name: Software Practice
-...
+---
 <!-- << HTML Header for html stuff >> -->
 
 
