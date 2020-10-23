@@ -1,5 +1,4 @@
 ---
-# <!-- << YAML Header for including Meta data in Markdown document >> -->
 title: Game README document
 version: v0.0
 team-name: JustBroken
