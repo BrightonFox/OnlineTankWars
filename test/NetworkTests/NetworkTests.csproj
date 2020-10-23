@@ -13,8 +13,8 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\NetworkController\NetworkController.csproj" />
     <ProjectReference Include="..\NetworkTestHelper\NetworkTestHelper.csproj" />
+    <ProjectReference Include="..\..\src\NetworkController\NetworkController.csproj" />
   </ItemGroup>
 
 </Project>

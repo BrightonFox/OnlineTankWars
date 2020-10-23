@@ -32,7 +32,7 @@ public class SocketState
   internal StringBuilder data = new StringBuilder();  // Unprocessed data
 
   /// <summary>
-  /// A message indicating the nature of an error, if one occured
+  /// A message indicating the nature of an error, if one occurred
   /// </summary>
   public string ErrorMessage
   {
