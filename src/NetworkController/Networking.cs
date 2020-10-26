@@ -104,7 +104,7 @@ namespace NetworkUtil
       }
       catch (Exception)
       {
-        // see if host name is a valid ipaddress
+        // see if host name is a valid ip address
         try
         {
           ipAddress = IPAddress.Parse(hostName);

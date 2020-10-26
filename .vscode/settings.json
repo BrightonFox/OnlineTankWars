@@ -157,6 +157,7 @@
             "assgn",
             "disp",
             "isdigit",
+            "netcoreapp",
             "oster",
             "osterhoutan"
         ],
