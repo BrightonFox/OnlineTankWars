@@ -341,7 +341,7 @@ namespace NetworkUtil
         secondCalledCount++;
       }
 
-      // Change the OnNetworkAction after the first invokation
+      // Change the OnNetworkAction after the first invocation
       testLocalSocketState.OnNetworkAction = firstOnNetworkAction;
 
       Networking.Send(testRemoteSocketState.TheSocket, "a");
