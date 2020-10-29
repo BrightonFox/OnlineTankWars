@@ -141,7 +141,7 @@ namespace NetworkUtil
                                         $"\n    {ex0.Message}" +
                                         $"\n    PARSE ERROR MESSAGE: {ex1.Message}";
 
-                    toCall(ss);
+                    ss.OnNetworkAction(ss);
                     return;
                 }
             }
@@ -165,6 +165,7 @@ namespace NetworkUtil
                 state.ErrorOccured = true;
                 state.ErrorMessage = "ERROR: Connection Timed Out !! (3000ms)";
             }
+            state.OnNetworkAction(state);
         }
 
         /// <summary>
