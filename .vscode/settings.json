@@ -4,7 +4,8 @@
     //<<                                     General Functionality                                      >>//
     //<<                                           Settings                                             >>//
     //<<================================================================================================>>//
-
+    // - Set C# TestFile lookup path glob pattern ----
+    "dotnet-test-explorer.testProjectPath": "**/test/**/*Test*.@(csproj|vbproj|fsproj)",
 
 
 
@@ -151,9 +152,11 @@
             "Kopta",
             "OSTER",
             "OSTERHOUTAN",
+            "Occured",
             "Oster",
             "Osterhout",
             "Osterhoutan",
+            "abcdefghijklmnopqrstuvwxyz",
             "assgn",
             "disp",
             "isdigit",

@@ -1,4 +1,5 @@
-﻿using System.Timers;
+﻿using System.Linq;
+using System.Timers;
 using System;
 using System.Net;
 using System.Net.Sockets;
@@ -24,7 +25,7 @@ namespace NetworkUtil
         {
             TcpListener server = new TcpListener(IPAddress.Any, port);
             server.Start();
-            server.BeginAcceptSocket(AcceptNewClient, (toCall, server));
+            server.BeginAcceptSocket(AcceptNewClient, /*new Tuple<Action<SocketState>,TcpListener>*/(toCall, server));
             return server;
         }
 
@@ -48,7 +49,7 @@ namespace NetworkUtil
         /// 1) a delegate so the user can take action (a SocketState Action), and 2) the TcpListener</param>
         private static void AcceptNewClient(IAsyncResult ar)
         {
-            (var toCall, var server) = (Tuple<Action<SocketState>, TcpListener>)ar.AsyncState;
+            (var toCall, var server) = (ValueTuple<Action<SocketState>, TcpListener>)ar.AsyncState;
             SocketState state;
             Socket socket = null;
 
@@ -136,7 +137,7 @@ namespace NetworkUtil
                 {
                     var ss = new SocketState(toCall, null);
                     ss.ErrorOccured = true;
-                    ss.ErrorMessage = $"NETWORK ERROR: `hostName` ({hostName}) is not a valid ip address or URL !!"+
+                    ss.ErrorMessage = $"NETWORK ERROR: `hostName` ({hostName}) is not a valid ip address or URL !!" +
                                         $"\n    {ex0.Message}" +
                                         $"\n    PARSE ERROR MESSAGE: {ex1.Message}";
 
@@ -155,32 +156,15 @@ namespace NetworkUtil
             // game like ours will be 
             socket.NoDelay = true;
 
-            int interCount = 0;
-            var timer = new Timer(500);
+            var result = socket.BeginConnect(ipAddress, port, ConnectedCallback, state);
 
-            timer.Elapsed += (s, tArgs) => {
-                if (interCount > 6 && !socket.Connected)
-                {
-                    state.ErrorOccured = true;
-                    state.ErrorMessage = "CONNECTION ERROR: Connection timed out !!\n" +
-                                        $"    `hostName`: {hostName}\n" +
-                                        $"    IP Address: {ipAddress}:{port}";
-                    timer.Stop();
-                    timer.Dispose();
+            bool success = result.AsyncWaitHandle.WaitOne(3000, true);
 
-                    toCall(state);
-                }
-                else if (!socket.Connected)
-                    interCount++;
-                else 
-                {
-                    timer.Stop();
-                    timer.Dispose();
-                }
-            };
-
-            socket.BeginConnect(ipAddress, port, ConnectedCallback, state);
-            timer.Start();
+            if (!socket.Connected)
+            {
+                state.ErrorOccured = true;
+                state.ErrorMessage = "ERROR: Connection Timed Out !! (3000ms)";
+            }
         }
 
         /// <summary>
@@ -198,7 +182,19 @@ namespace NetworkUtil
         /// <param name="ar">The object asynchronously passed via BeginConnect</param>
         private static void ConnectedCallback(IAsyncResult ar)
         {
-            throw new NotImplementedException();
+            SocketState state = (SocketState)ar.AsyncState;
+
+            try
+            {
+                state.TheSocket.EndConnect(ar);
+
+                state.OnNetworkAction(state);
+            }
+            catch (Exception ex)
+            {
+                state.ErrorOccured = true;
+                state.ErrorMessage = $"ERROR: {ex.Message}  [NetworkUtils.ConnectedCallback]";
+            }
         }
 
 
@@ -220,8 +216,21 @@ namespace NetworkUtil
         /// <param name="state">The SocketState to begin receiving</param>
         public static void GetData(SocketState state)
         {
-            throw new NotImplementedException();
+            try
+            {
+                state.TheSocket.BeginReceive(state.buffer, 0, SocketState.BufferSize,
+                                                0, ReceiveCallback, state);
+            }
+            catch (Exception ex)
+            {
+                if (state.ErrorOccured)
+                    return;
+                state.ErrorOccured = true;
+                state.ErrorMessage = $"ERROR: {ex.Message}  [NetworkUtils.GetData]";
+                state.OnNetworkAction(state);
+            }
         }
+
 
         /// <summary>
         /// To be used as the callback for finalizing a receive operation that was initiated by GetData.
@@ -242,7 +251,24 @@ namespace NetworkUtil
         /// </param>
         private static void ReceiveCallback(IAsyncResult ar)
         {
-            throw new NotImplementedException();
+            var state = (SocketState)ar.AsyncState;
+            try
+            {
+                int len = state.TheSocket.EndReceive(ar);
+                lock (state.data)
+                {
+                    state.data.Append(Encoding.UTF8.GetString(state.buffer, 0, len));
+                }
+                state.OnNetworkAction(state);
+            }
+            catch (Exception ex)
+            {
+                if (state.ErrorOccured)
+                    return;
+                state.ErrorOccured = true;
+                state.ErrorMessage = $"ERROR: {ex.Message}  [NetworkUtils.ReceiveCallback]";
+                state.OnNetworkAction(state);
+            }
         }
 
         /// <summary>
@@ -257,7 +283,19 @@ namespace NetworkUtil
         /// <returns>True if the send process was started, false if an error occurs or the socket is already closed</returns>
         public static bool Send(Socket socket, string data)
         {
-            throw new NotImplementedException();
+            if (socket.Connected)
+                try
+                {
+                    byte[] buffer = Encoding.UTF8.GetBytes(data);
+                    socket.BeginSend(buffer, 0, buffer.Length, 0, SendCallback, (socket, data));
+                    return true;
+                }
+                catch (Exception)
+                {
+                    socket.Close();
+                }
+
+            return false;
         }
 
         /// <summary>
@@ -273,7 +311,22 @@ namespace NetworkUtil
         /// </param>
         private static void SendCallback(IAsyncResult ar)
         {
-            throw new NotImplementedException();
+            (var socket, var data) = (ValueTuple<Socket, string>)ar.AsyncState;
+            try
+            {
+                int lenS = socket.EndSend(ar);
+                if (lenS == 0)
+                    return;
+                byte[] buffer = (byte[])Encoding.UTF8.GetBytes(data).Skip(lenS);
+                if (buffer.Length == 0)
+                    return;
+                data = Encoding.UTF8.GetString(buffer);
+                socket.BeginSend(buffer, 0, buffer.Length, 0, SendCallback, (socket, data));
+            }
+            catch (Exception)
+            {
+                return;
+            }
         }
 
 
@@ -290,7 +343,19 @@ namespace NetworkUtil
         /// <returns>True if the send process was started, false if an error occurs or the socket is already closed</returns>
         public static bool SendAndClose(Socket socket, string data)
         {
-            throw new NotImplementedException();
+            if (socket.Connected)
+                try
+                {
+                    byte[] buffer = Encoding.UTF8.GetBytes(data);
+                    socket.BeginSend(buffer, 0, buffer.Length, 0, SendAndCloseCallback, (socket, data));
+                    return true;
+                }
+                catch (Exception)
+                {
+                    socket.Close();
+                }
+
+            return false;
         }
 
         /// <summary>
@@ -308,8 +373,24 @@ namespace NetworkUtil
         /// </param>
         private static void SendAndCloseCallback(IAsyncResult ar)
         {
-            throw new NotImplementedException();
-        }
+            (var socket, var data) = (ValueTuple<Socket, string>)ar.AsyncState;
+            try
+            {
+                int lenS = socket.EndSend(ar);
+                if (lenS > 0)
+                {
+                    byte[] buffer = (byte[])Encoding.UTF8.GetBytes(data).Skip(lenS);
+                    if (buffer.Length > 0)
+                    {
+                        data = Encoding.UTF8.GetString(buffer);
+                        socket.BeginSend(buffer, 0, buffer.Length, 0, SendAndCloseCallback, (socket, data));
+                    }
+                }
+            }
+            catch (Exception) { }
 
+            socket.Close();
+            return;
+        }
     }
 }
