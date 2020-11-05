@@ -5,7 +5,7 @@
     //<<                                           Settings                                             >>//
     //<<================================================================================================>>//
     // - Set C# TestFile lookup path glob pattern ----
-    "dotnet-test-explorer.testProjectPath": "**/test/**/*Test*.@(csproj|vbproj|fsproj)",
+    "dotnet-test-explorer.testProjectPath": "**/*Test*.@(csproj|vbproj|fsproj)",
 
 
 

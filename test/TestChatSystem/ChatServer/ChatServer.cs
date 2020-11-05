@@ -10,6 +10,7 @@ namespace ChatServer
 {
   // TODO: Should we really declare SocketState in both places (client and server)?
   //       No! This will be fixed in PS7.
+
   class SocketState
   {
     public Socket theSocket;
