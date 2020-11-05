@@ -14,7 +14,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\NetworkTestHelper\NetworkTestHelper.csproj" />
-    <ProjectReference Include="..\..\src\NetworkController\NetworkController.csproj" />
+    <ProjectReference Include="..\..\..\src\NetworkController\NetworkController.csproj" />
   </ItemGroup>
 
 </Project>
