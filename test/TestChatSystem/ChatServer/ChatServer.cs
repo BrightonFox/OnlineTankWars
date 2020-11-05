@@ -1,177 +1,155 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Net;
-using System.Net.Sockets;
-using System.Text;
+using NetworkUtil;
 using System.Text.RegularExpressions;
-
 
 namespace ChatServer
 {
-  // TODO: Should we really declare SocketState in both places (client and server)?
-  //       No! This will be fixed in PS7.
 
-  class SocketState
-  {
-    public Socket theSocket;
-    public byte[] messageBuffer;
-    public StringBuilder sb;
-
-    public SocketState(Socket s)
-    {
-      theSocket = s;
-      messageBuffer = new byte[1024];
-      sb = new StringBuilder();
-    }
-  }
-
+  /// <summary>
+  /// A simple server for receiving text messages from multiple clients
+  /// and broadcasting the messages out
+  /// </summary>
   class ChatServer
   {
-    private HashSet<Socket> clients;
-
-    private TcpListener listener;
+    // A map of clients that are connected, each with an ID
+    private Dictionary<long, SocketState> clients;
 
     static void Main(string[] args)
     {
       ChatServer server = new ChatServer();
       server.StartServer();
 
-      Console.WriteLine("Server running...");
-
-      // Hold the program open
+      // Sleep to prevent the program from closing,
+      // since all the real work is done in separate threads.
+      // StartServer is non-blocking.
       Console.Read();
     }
 
     /// <summary>
-    /// Creates a new ChatServer object
+    /// Initialized the server's state
     /// </summary>
     public ChatServer()
     {
-      clients = new HashSet<Socket>();
+      clients = new Dictionary<long, SocketState>();
     }
 
     /// <summary>
-    /// Start accepting Tcp socket connections from clients
+    /// Start accepting Tcp sockets connections from clients
     /// </summary>
     public void StartServer()
     {
-      // 1. initialize the listener
-      listener = new TcpListener(IPAddress.Any, 11000);
+      // This begins an "event loop"
+      Networking.StartServer(NewClientConnected, 11000);
 
-      // 2. start the listener
-      listener.Start();
-
-      // 3. begin accepting a client (starts an event loop)
-      listener.BeginAcceptSocket(OnClientConnect, null);
+      Console.WriteLine("Server is running");
     }
 
     /// <summary>
-    /// Callback for when a connection is made (see line 64)
+    /// Method to be invoked by the networking library
+    /// when a new client connects (see line 43)
     /// </summary>
-    /// <param name="ar"></param>
-    private void OnClientConnect(IAsyncResult ar)
+    /// <param name="state">The SocketState representing the new client</param>
+    private void NewClientConnected(SocketState state)
     {
-      Console.WriteLine("contact from client");
+      if (state.ErrorOccured)
+        return;
 
-      Socket newClient = listener.EndAcceptSocket(ar);
-
-      SocketState state = new SocketState(newClient);
-
-      // Keep track of the client so we can broadcast to all of them
+      // Save the client state
+      // Need to lock here because clients can disconnect at any time
       lock (clients)
       {
-        clients.Add(newClient);
+        clients[state.ID] = state;
       }
 
-      // starts a receive loop
-      state.theSocket.BeginReceive(state.messageBuffer, 0, state.messageBuffer.Length, SocketFlags.None,
-        OnReceive, state);
+      // change the state's network action to the 
+      // receive handler so we can process data when something
+      // happens on the network
+      state.OnNetworkAction = ReceiveMessage;
 
-      // continues an accept loop (started by line 64)
-      listener.BeginAcceptSocket(OnClientConnect, null);
+      Networking.GetData(state);
     }
 
     /// <summary>
-    /// Callback for when data is received (see line 86)
+    /// Method to be invoked by the networking library
+    /// when a network action occurs (see lines 68-70)
     /// </summary>
-    /// <param name="ar"></param>
-    private void OnReceive(IAsyncResult ar)
+    /// <param name="state"></param>
+    private void ReceiveMessage(SocketState state)
     {
-      SocketState state = (SocketState)ar.AsyncState;
+      // Remove the client if they aren't still connected
+      if (state.ErrorOccured)
+      {
+        RemoveClient(state.ID);
+        return;
+      }
 
-      int numBytes = state.theSocket.EndReceive(ar);
-
-      string data = Encoding.UTF8.GetString(state.messageBuffer, 0, numBytes);
-
-      // Buffer the data received (we may not have a full message yet)
-      state.sb.Append(data);
-
-      // Process the data received so far
-      ProcessMessages(state.sb);
-
-      // continues a receive loop (started by line 86)
-      state.theSocket.BeginReceive(state.messageBuffer, 0, state.messageBuffer.Length, SocketFlags.None,
-        OnReceive, state);
+      ProcessMessage(state);
+      // Continue the event loop that receives messages from this client
+      Networking.GetData(state);
     }
 
 
     /// <summary>
-    /// Look for complete messages (terminated by a '.'), 
-    /// then print and remove them from the string builder,
-    /// and broadcast the message to all clients.
+    /// Given the data that has arrived so far, 
+    /// potentially from multiple receive operations, 
+    /// determine if we have enough to make a complete message,
+    /// and process it (print it and broadcast it to other clients).
     /// </summary>
-    /// <param name="sb"></param>
-    private void ProcessMessages(StringBuilder sb)
+    /// <param name="sender">The SocketState that represents the client</param>
+    private void ProcessMessage(SocketState state)
     {
-      string totalData = sb.ToString();
-      string[] parts = Regex.Split(totalData, @"(?<=[\.])");
+      string totalData = state.GetData();
 
+      string[] parts = Regex.Split(totalData, @"(?<=[\n])");
+
+      // Loop until we have processed all messages.
+      // We may have received more than one.
       foreach (string p in parts)
       {
         // Ignore empty strings added by the regex splitter
         if (p.Length == 0)
           continue;
-
-        // Ignore last message if incomplete
-        if (p[p.Length - 1] != '.')
+        // The regex splitter will include the last string even if it doesn't end with a '\n',
+        // So we need to ignore it if this happens. 
+        if (p[p.Length - 1] != '\n')
           break;
 
-        Console.WriteLine("message received: " + p);
+        Console.WriteLine("received message from client " + state.ID + ": \"" + p + "\"");
 
-        // Broadcast the message by sending to all clients
+        // Remove it from the SocketState's growable buffer
+        state.RemoveData(0, p.Length);
+
+        // Broadcast the message to all clients
+        // Lock here beccause we can't have new connections 
+        // adding while looping through the clients list.
+        // We also need to remove any disconnected clients.
+        HashSet<long> disconnectedClients = new HashSet<long>();
         lock (clients)
         {
-          foreach (Socket c in clients)
-            Send(c, p);
+          foreach (SocketState client in clients.Values)
+          {
+            if (!Networking.Send(client.TheSocket, "Message from client " + state.ID + ": " + p))
+              disconnectedClients.Add(client.ID);
+          }
         }
-        sb.Remove(0, p.Length);
+        foreach (long id in disconnectedClients)
+          RemoveClient(id);
       }
     }
 
     /// <summary>
-    /// Convenience wrapper around sending a string on a socket
+    /// Removes a client from the clients dictionary
     /// </summary>
-    /// <param name="s"></param>
-    /// <param name="message"></param>
-    private void Send(Socket s, string message)
+    /// <param name="id">The ID of the client</param>
+    private void RemoveClient(long id)
     {
-      byte[] messageBytes = Encoding.UTF8.GetBytes(message);
-      // Begin sending the message
-      s.BeginSend(messageBytes, 0, messageBytes.Length, SocketFlags.None, SendCallback, s);
+      Console.WriteLine("Client " + id + " disconnected");
+      lock (clients)
+      {
+        clients.Remove(id);
+      }
     }
-
-    /// <summary>
-    /// Async callback for when a send operation completes
-    /// </summary>
-    /// <param name="ar"></param>
-    private void SendCallback(IAsyncResult ar)
-    {
-      // Nothing much to do here, just conclude the send operation so the socket is happy.
-      Socket client = (Socket)ar.AsyncState;
-      client.EndSend(ar);
-    }
-
   }
 }
-
 

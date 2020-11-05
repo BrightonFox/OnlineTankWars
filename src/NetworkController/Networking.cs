@@ -1,4 +1,22 @@
-﻿using System.Linq;
+﻿/**
+ * Team: JustBroken
+ * Authors: 
+ *   + Andrew Osterhout (u1317172)
+ *   + Brighton Fox (u0981544)
+ * Organization: University of Utah
+ *   Course: CS3500: Software Practice
+ *   Semester: Fall 2020
+ * 
+ * Version Data: 
+ *   + Template/Starter-Code:
+ *       Author: Daniel Kopta
+ *       Date: May 2019
+ *       About: Static Class containing a bunch of helper methods for interfacing with network functionality.
+ *   + ...
+ */
+
+
+using System.Linq;
 using System;
 using System.Net;
 using System.Net.Sockets;
@@ -24,7 +42,7 @@ namespace NetworkUtil
         {
             TcpListener server = new TcpListener(IPAddress.Any, port);
             server.Start();
-            server.BeginAcceptSocket(AcceptNewClient, /*new Tuple<Action<SocketState>,TcpListener>*/(toCall, server));
+            server.BeginAcceptSocket(AcceptNewClient, (toCall, server));
             return server;
         }
 
