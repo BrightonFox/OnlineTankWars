@@ -20,7 +20,7 @@ using System;
 using System.Net.Sockets;
 using System.Threading;
 
-namespace NetworkUtil
+namespace TankWars.NetworkUtil
 {
 
   public class NetworkTestHelper

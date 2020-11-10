@@ -47,6 +47,31 @@ _&lt;Brief description of project&gt;_
   *   that you would like the graders to be aware of. 
   -->
 
+### Design Decisions
+
+
+### Schedule
+#### Model
+-[X] Make General json Models
+-[X] Make client specific extension of json models
+-[ ] Finish commenting the code
+
+#### Controller
+-[ ] Set up Network Capabilities
+  -[ ] Code Json receive
+  -[ ] Code Json send
+-[ ] Create Events for the the View
+-[ ] Create Retrieve Methods for the View
+-[ ] Finish commenting the code
+
+#### View 
+-[ ] Import Drawing Panel from Lab 12
+  -[ ] Create draw methods and add to `OnPaint` for all the objects
+-[ ] Design `MainForm`
+  -[ ] Handle connection interface
+-[ ] Handle center on player tank
+-[ ] Create methods to register to appropriate controller events.
+
 
 
 <!-- << End of Markdown Document >> -->

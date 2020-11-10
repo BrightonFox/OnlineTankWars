@@ -1,0 +1,8 @@
+<Project Sdk="Microsoft.NET.Sdk">
+    <ItemGroup>
+      <ProjectReference Include="..\..\model\TankWars\TankWars.csproj" />
+    </ItemGroup>
+    <PropertyGroup>
+      <TargetFramework>netstandard2.0</TargetFramework>
+    </PropertyGroup>
+</Project>

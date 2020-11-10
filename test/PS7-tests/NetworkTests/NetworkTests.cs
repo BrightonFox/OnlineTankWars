@@ -22,7 +22,7 @@ using System.Collections.Generic;
 using System.Net.Sockets;
 using System.Text;
 
-namespace NetworkUtil
+namespace TankWars.NetworkUtil
 {
 
     [TestClass]

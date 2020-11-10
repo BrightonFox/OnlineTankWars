@@ -8,7 +8,7 @@
 // </auto-generated>
 //------------------------------------------------------------------------------
 
-namespace ClientView.Properties
+namespace TankWars.Client.View.Properties
 {
 
 

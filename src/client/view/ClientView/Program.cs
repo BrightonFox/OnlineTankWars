@@ -4,7 +4,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 
-namespace ClientView
+namespace TankWars.Client.View
 {
     static class Program
     {

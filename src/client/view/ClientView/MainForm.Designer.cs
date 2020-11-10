@@ -1,4 +1,4 @@
-﻿namespace ClientView
+﻿namespace TankWars.Client.View
 {
     partial class MainForm
     {

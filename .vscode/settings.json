@@ -150,6 +150,7 @@
         "cSpell.words": [
             "Assgn",
             "Kopta",
+            "Newtonsoft",
             "OSTER",
             "OSTERHOUTAN",
             "Occured",
@@ -161,6 +162,7 @@
             "disp",
             "isdigit",
             "netcoreapp",
+            "netstandard",
             "oster",
             "osterhoutan"
         ],
