@@ -4,7 +4,10 @@ using System.Linq;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 
-namespace TankWars.Client.View
+using TankWars.Client.View;
+using TankWars.Client.Control;
+
+namespace TankWars.Client
 {
     static class Program
     {
@@ -14,9 +17,10 @@ namespace TankWars.Client.View
         [STAThread]
         static void Main()
         {
+            var ctrl = new Controller();
             Application.EnableVisualStyles();
             Application.SetCompatibleTextRenderingDefault(false);
-            Application.Run(new MainForm());
+            Application.Run(new MainForm(ctrl));
         }
     }
 }

@@ -4,5 +4,6 @@
     </ItemGroup>
     <PropertyGroup>
       <TargetFramework>netstandard2.0</TargetFramework>
+      <RootNamespace>TankWars.Client.Model</RootNamespace>
     </PropertyGroup>
 </Project>

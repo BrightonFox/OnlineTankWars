@@ -12,16 +12,14 @@
  */
 
 using System;
-using TankWars.MathUtils;
 
 namespace TankWars.Client.Model
 {
-    public class Powerup : TankWars.Powerup
+    public class World : TankWars.World
     {
-        public int Id { get { return _id; } private set {return;} }
+        public World(int _size) : base(_size)
+        {
 
-        public Vector2D Location { get { return _location; } private set {return;} }
-
-        public bool IsDead { get { return _isDead; } private set {return;} }
+        }
     }
 }

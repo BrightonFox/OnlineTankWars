@@ -7,6 +7,9 @@
     // - Set C# TestFile lookup path glob pattern ----
     "dotnet-test-explorer.testProjectPath": "**/*Test*.@(csproj|vbproj|fsproj)",
 
+    // - Set File explorer to not update with selection ----
+    "explorer.autoReveal": false,
+
 
 
     //<<================================================================================================>>//
@@ -157,6 +160,7 @@
             "Oster",
             "Osterhout",
             "Osterhoutan",
+            "Powerup",
             "abcdefghijklmnopqrstuvwxyz",
             "assgn",
             "bdir",

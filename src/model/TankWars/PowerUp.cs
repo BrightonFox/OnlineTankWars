@@ -19,20 +19,20 @@ using TankWars.MathUtils;
 namespace TankWars
 {
     [JsonObject(MemberSerialization.OptIn)]
-    public class PowerUp
+    public class Powerup
     {
-        public PowerUp()
+        public Powerup()
         {
             // TODO: figure out what goes here...
         }
 
         [JsonProperty(PropertyName = "power")]
-        private int _id;
+        protected int _id;
 
         [JsonProperty(PropertyName = "loc")]
-        private Vector2D _location;
+        protected Vector2D _location;
 
         [JsonProperty(PropertyName = "died")]
-        private bool _isDead;
+        protected bool _isDead;
     }
 }
