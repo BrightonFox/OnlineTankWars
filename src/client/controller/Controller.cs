@@ -12,6 +12,13 @@
  */
 
 using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+using System.Timers;
+
+using TankWars.Client.Model;
 
 namespace TankWars.Client.Control
 {

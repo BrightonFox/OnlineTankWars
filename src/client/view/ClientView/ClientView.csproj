@@ -56,6 +56,10 @@
       <Project>{63C5B48F-1582-4033-90B0-E7F14AD456BD}</Project>
       <Name>TankWars.Client.Model</Name>
     </ProjectReference>
+    <ProjectReference Include="..\DrawingPanel\DrawingPanel.csproj">
+      <Project>{035e4da8-6a86-4205-9a8b-844ac3313e12}</Project>
+      <Name>DrawingPanel</Name>
+    </ProjectReference>
   </ItemGroup>
   <ItemGroup>
     <Compile Include="MainForm.cs">

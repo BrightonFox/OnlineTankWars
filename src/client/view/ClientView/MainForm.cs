@@ -6,6 +6,7 @@ using System.Drawing;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using System.Timers;
 using System.Windows.Forms;
 
 using TankWars.Client.Control;
@@ -32,7 +33,7 @@ namespace TankWars.Client.View
         private const int viewSize = 500;
         private const int menuSize = 40;
 
-        public Form1(Controller ctl)
+        public MainForm(Controller ctl)
         {
             InitializeComponent();
             theController = ctl;
