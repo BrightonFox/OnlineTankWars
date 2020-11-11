@@ -159,12 +159,14 @@
             "Osterhoutan",
             "abcdefghijklmnopqrstuvwxyz",
             "assgn",
+            "bdir",
             "disp",
             "isdigit",
             "netcoreapp",
             "netstandard",
             "oster",
-            "osterhoutan"
+            "osterhoutan",
+            "tdir"
         ],
 
         "cSpell.userWords": [

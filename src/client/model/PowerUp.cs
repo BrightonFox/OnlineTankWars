@@ -12,6 +12,7 @@
  */
 
 using System;
+using TankWars.MathUtils;
 
 namespace TankWars.Client.Model
 {

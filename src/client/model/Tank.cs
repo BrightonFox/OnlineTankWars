@@ -12,6 +12,8 @@
  */
 
 using System;
+using TankWars.MathUtils;
+
 
 namespace TankWars.Client.Model
 {
@@ -22,11 +24,11 @@ namespace TankWars.Client.Model
 
         public string PlayerName { get {return _playerName;} private set {return;}}
 
-        public TankWars.Vector2D Location { get {return _location;} private set {return;}}
+        public Vector2D Location { get {return _location;} private set {return;}}
         
-        public TankWars.Vector2D BarrelDirection { get {return _barrelDirection;} private set {return;}}
+        public Vector2D BarrelDirection { get {return _barrelDirection;} private set {return;}}
 
-        public TankWars.Vector2D Direction { get {return _direction;} private set {return;}}
+        public Vector2D Direction { get {return _direction;} private set {return;}}
 
         public int Score { get { return _score; } private set {return;} }
 

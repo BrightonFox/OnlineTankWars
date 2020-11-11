@@ -12,6 +12,7 @@
  */
 
 using System;
+using TankWars.MathUtils;
 
 namespace TankWars.Client.Model
 {
@@ -20,9 +21,9 @@ namespace TankWars.Client.Model
 
         public int Id { get {return _id;} private set {return;} }
         
-        public TankWars.Vector2D Origin { get {return _origin;} private set {return;} }
+        public Vector2D Origin { get {return _origin;} private set {return;} }
         
-        public TankWars.Vector2D Direction { get {return _direction;} private set {return;} }
+        public Vector2D Direction { get {return _direction;} private set {return;} }
 
         public int OwnerId { get { return _ownerId; } private set { return; } }
     }

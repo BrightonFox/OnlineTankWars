@@ -23,8 +23,8 @@ organization: University of Utah (UofU)
 
 <!-- << Begin Markdown Document >> -->
 
-   Game Project: Tank Wars 
-============================
+  Game Project: Tank Wars 
+===========================
 #### _(PS7-PS9)_
 
 &lt;Clever thing here&gt;
@@ -48,7 +48,7 @@ _&lt;Brief description of project&gt;_
   -->
 
 ### Design Decisions
-
+We have a general model design that will get extended as appropriate for a client model and sever model.
 
 ### Schedule
 #### Model

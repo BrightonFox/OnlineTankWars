@@ -5,7 +5,7 @@
 using System;
 using Newtonsoft.Json;
 
-namespace TankWars
+namespace TankWars.MathUtils
 {
   /// <summary>
   /// A class to represent a 2D Vector in space

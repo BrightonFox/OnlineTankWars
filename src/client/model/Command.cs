@@ -12,6 +12,8 @@
  */
 
 using System.Text;
+using TankWars.MathUtils;
+
 
 namespace TankWars.Client.Model
 {
