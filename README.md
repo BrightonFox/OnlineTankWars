@@ -57,8 +57,8 @@ We have a general model design that will get extended as appropriate for a clien
 -[ ] Finish commenting the code
 
 #### Controller
--[ ] Set up Network Capabilities
-  -[ ] Code Json receive
+-[X] Set up Network Capabilities
+  -[X] Code Json receive
   -[ ] Code Json send
 -[ ] Create Events for the the View
 -[ ] Create Retrieve Methods for the View

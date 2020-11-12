@@ -164,6 +164,7 @@
             "abcdefghijklmnopqrstuvwxyz",
             "assgn",
             "bdir",
+            "deserializes",
             "disp",
             "isdigit",
             "netcoreapp",

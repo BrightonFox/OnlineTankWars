@@ -15,8 +15,10 @@ using System;
 
 namespace TankWars.Client.Model
 {
-    public class Player : TankWars.Player
+    public class Player : IPlayer
     {
- 
+        public Player(string name) : base(name)
+        {
+        }
     }
 }

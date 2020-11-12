@@ -12,14 +12,17 @@
  */
 
 using System;
+using System.Collections.Generic;
 
 namespace TankWars.Client.Model
 {
-    public class World : TankWars.World
+    public class World : IWorld
     {
+        public Dictionary<int, Beam> Beams;
+        
         public World(int _size) : base(_size)
         {
-
         }
+
     }
 }

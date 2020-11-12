@@ -12,23 +12,31 @@
  */
 
 using System;
+using System.Collections.Generic;
 
 namespace TankWars
 {
-    public class World
+    public abstract class IWorld
   {
     // In reality, these should not be public,
     // but for the purposes of this lab, the "World" 
     // class is just a wrapper around these two fields.
-    public Dictionary<int, Player> Players;
-    public Dictionary<int, Powerup> Powerups;
+    // public Dictionary<int, IPlayer> Players;
+    public Dictionary<int, ITank> Tanks;
+    public Dictionary<int, IPowerup> Powerups;
+    public Dictionary<int, IWall> Walls;
+    public Dictionary<int, IProjectile> Projectiles;
+    
     public int size
     { get; private set; }
 
-    public World(int _size)
+    public IWorld(int _size)
     {
-      Players = new Dictionary<int, Player>();
-      Powerups = new Dictionary<int, Powerup>();
+      Tanks = new Dictionary<int, ITank>();
+      Powerups = new Dictionary<int, IPowerup>();
+      Walls = new Dictionary<int, IWall>();
+      Projectiles = new Dictionary<int, IProjectile>();
+
       size = _size;
     }
 

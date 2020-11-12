@@ -17,7 +17,7 @@ using TankWars.MathUtils;
 
 namespace TankWars.Client.Model
 {
-    public class Command : TankWars.Command
+    public class Command : ICommand
     {
 
         public string Moving

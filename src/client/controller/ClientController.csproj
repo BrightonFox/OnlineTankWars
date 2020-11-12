@@ -6,8 +6,14 @@
     </PropertyGroup>
 
     <ItemGroup>
+      <PackageReference Include="Json.Net" Version="1.0.23" />
+      <PackageReference Include="Newtonsoft.Json" Version="12.0.3" />
+    </ItemGroup>
+
+    <ItemGroup>
       <ProjectReference Include="..\..\model\TankWars\TankWars.csproj" />
       <ProjectReference Include="..\model\ClientModel.csproj" />
+      <ProjectReference Include="..\..\model\NetworkController\NetworkController.csproj" />
     </ItemGroup>
   
   </Project>

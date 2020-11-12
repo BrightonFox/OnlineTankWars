@@ -16,7 +16,7 @@ using TankWars.MathUtils;
 
 namespace TankWars.Client.Model
 {
-    public class Beam : TankWars.Beam
+    public class Beam : IBeam
     {
 
         public int Id { get {return _id;} private set {return;} }

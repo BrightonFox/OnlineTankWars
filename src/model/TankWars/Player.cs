@@ -15,14 +15,29 @@ using System;
 
 namespace TankWars
 {
-    public class Player
+    public abstract class IPlayer
     {
-
-        // !! TEMP !!
-        public int GetTeam()
+        private bool idSet = false;
+        public IPlayer(string name)
         {
-            return 0;
+            Name = name;
         }
 
+        public string Name { get; private set; }
+        public int Id
+        {
+            get
+            {
+                return Id;
+            }
+            set
+            {
+                if (!idSet)
+                {
+                    Id = value;
+                    idSet = true;
+                }
+            }
+        }
     }
 }

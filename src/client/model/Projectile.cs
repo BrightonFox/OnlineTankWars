@@ -16,7 +16,7 @@ using TankWars.MathUtils;
 
 namespace TankWars.Client.Model
 {
-    public class Projectile : TankWars.Projectile
+    public class Projectile : IProjectile
     {
 
         public int Id { get { return _id; } private set {return;} }

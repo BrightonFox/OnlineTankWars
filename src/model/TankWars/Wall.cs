@@ -19,9 +19,9 @@ using TankWars.MathUtils;
 namespace TankWars
 {
     [JsonObject(MemberSerialization.OptIn)]
-    public class Wall
+    public abstract class IWall
     {
-        public Wall()
+        public IWall()
         {
             //TODO: figure out what goes here...
         }

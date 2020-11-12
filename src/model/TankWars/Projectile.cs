@@ -19,9 +19,9 @@ using TankWars.MathUtils;
 namespace TankWars
 {
     [JsonObject(MemberSerialization.OptIn)]
-    public class Projectile
+    public abstract class IProjectile
     {
-        public Projectile()
+        public IProjectile()
         {
             // TODO: figure out what goes here...
         }

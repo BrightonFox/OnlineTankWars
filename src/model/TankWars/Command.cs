@@ -19,9 +19,9 @@ using TankWars.MathUtils;
 namespace TankWars
 {
     [JsonObject(MemberSerialization.OptIn)]
-    public class Command
+    public abstract class ICommand
     {
-        public Command()
+        public ICommand()
         {
             //TODO: Figure out what to do here...
         }

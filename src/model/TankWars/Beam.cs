@@ -19,9 +19,9 @@ using TankWars.MathUtils;
 namespace TankWars
 {
     [JsonObject(MemberSerialization.OptIn)]
-    public class Beam
+    public abstract class IBeam
     {
-        public Beam()
+        public IBeam()
         {
             // TODO: figure out what goes here...
         }

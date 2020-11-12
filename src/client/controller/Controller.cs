@@ -17,138 +17,242 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Timers;
-
+using System.Text.RegularExpressions;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
+// using Json;
 using TankWars.Client.Model;
+using TankWars.NetworkUtil;
 
 namespace TankWars.Client.Control
 {
-    public class Controller
-    {
-        // World is a simple container for Players and Powerups
-    private World theWorld;
 
-    public const int worldSize = 500;
-
-    private bool movingPressed = false;
-    private bool mousePressed = false;
-
-    // Although we aren't actually doing any networking,
-    // this FakeServer object will simulate game updates coming 
-    // from an asynchronous server.
-    private FakeServer server;
-
+    public delegate void NetworkErrorOccuredHandler(string msg);
     public delegate void ServerUpdateHandler();
 
-    public event ServerUpdateHandler UpdateArrived;
 
-    public Controller()
+    public class Controller
     {
-      theWorld = new World(worldSize);
-      server = new FakeServer(worldSize);
-    }
+        private readonly Regex InitMsgPattern = new Regex(@"^(\d+)\n(\d+)\n$");
+        // readonly Regex ObjectMsgPattern = new Regex(@"\n");
+        private string tempData = "";
+        private bool movingPressed = false;
+        private bool mousePressed = false;
 
-    public World GetWorld()
-    {
-      return theWorld;
-    }
+        public event NetworkErrorOccuredHandler OnNetworkError;
+        public event NetworkErrorOccuredHandler OnNetworkConnectionError;
+        public event ServerUpdateHandler UpdateArrived;
 
-    public void ProcessUpdatesFromServer()
-    {
-      // Start a new timer that will simulate updates coming from the server
-      // every 15 millisecoonds
-      // Do not do anything like this in PS8
-      Timer serverTimer = new Timer();
-      serverTimer.Interval = 15;
-      serverTimer.Elapsed += UpdateCameFromServer;
-      serverTimer.Start();
-    }
+        public Player player;
+        public World world;
 
 
-    // Simulate a game update from a fake server
-    // This method is invoked every time the "serverTimer", above, ticks
-    private void UpdateCameFromServer(object sender, ElapsedEventArgs e)
-    {
-      List<Player> newPlayers;
-      List<Powerup> newPowerups;
+        public Controller()
+        {
+            this.UpdateArrived += this.ProcessInputs;
+        }
 
-      // Get the update from the "server"
-      server.GenerateFakeServerUpdate(out newPlayers, out newPowerups);
+        /// <summary>
+        /// Connects to server.
+        /// <para>
+        /// !! IT IS RECOMMENDED TO RUN THIS IN A SEPARATE THREAD !!
+        /// </para>
+        /// </summary>
+        /// <param name="addr"></param>
+        /// <param name="name"></param>
+        public void ConnectToServer(string addr, string name)
+        {
+            if (name.Length > 16)
+                name = name.Substring(0, 16);
+            player = new Player(name);
+            Networking.ConnectToServer(OnConnect, addr, 11000);
+        }
 
-      //Random r = new Random(); // ignore this for now
+        /// <summary>
+        /// Sends a single '\n' terminated string representing the player's name to the connection
+        /// held in passed SocketState.
+        /// </summary>
+        /// <param name="state"></param>
+        private void OnConnect(SocketState state)
+        {
+            if (state.ErrorOccured)
+            {
+                OnNetworkConnectionError(state.ErrorMessage);
+                return;
+            }
+            Networking.Send(state.TheSocket, player.Name + "\n");
+            state.OnNetworkAction = OnInitMsgReceive;
+            Networking.GetData(state);
+        }
 
-      // The server is not required to send updates about every object,
-      // so we update our local copy of the world only for the objects that
-      // the server gave us an update for.
+        /// <summary>
+        /// Retrieves player ID and world size from server initial messages
+        /// </summary>
+        /// <param name="state"></param>
+        private void OnInitMsgReceive(SocketState state)
+        {
+            if (state.ErrorOccured)
+                OnNetworkError(state.ErrorMessage);
 
-      foreach (Player play in newPlayers)
-      {
-        //while (r.Next() % 1000 != 0) ; // ignore this loop for now
-        if (!play.GetActive())
-          theWorld.Players.Remove(play.GetID());
-        else
-          theWorld.Players[play.GetID()] = play;
-      }
 
-      foreach (Powerup pow in newPowerups)
-      {
-        if (!pow.GetActive())
-          theWorld.Powerups.Remove(pow.GetID());
-        else
-          theWorld.Powerups[pow.GetID()] = pow;
-      }
+            Match match = InitMsgPattern.Match(state.GetData());
+            if (!match.Success)
+            {
+                Networking.GetData(state);
+                return;
+            }
+            try
+            {
+                player.Id = Int32.Parse(match.Groups[1].Value);
+                world = new World(Int32.Parse(match.Groups[2].Value));
+            }
+            catch (Exception)
+            {
+                OnNetworkError("ERROR: failed to parse player ID or World size from Server message !!  [Controller.OnMsgReceive]");
+                state.ClearData();
+                return;
+            }
+            state.ClearData();
+            state.OnNetworkAction = OnMsgReceive;
+        }
 
-      // Notify any listeners (the view) that a new game world has arrived from the server
-      if (UpdateArrived != null)
-        UpdateArrived();
 
-      // For whatever user inputs happened during the last frame,
-      // process them.
-      ProcessInputs();
+        /// <summary
+        /// Retrieves messages from server representing state of all game objects
+        /// to update client model world
+        /// </summary>
+        /// <param name="state"></param>
+        private void OnMsgReceive(SocketState state)
+        {
+            if (state.ErrorOccured)
+                OnNetworkError(state.ErrorMessage);
+            // Match match = ObjectMsgPattern.Match(state.GetData());
+            var items = Regex.Split(tempData + state.GetData(), @"\n");
+            state.ClearData();
 
-    }
+            try
+            {
+                int ii = 0;
+                for (ii = 0; ii < items.Length - 1; ii++)
+                {
+                    ParseJsonString(items[ii]);
+                }
+                if (items[++ii] == "")
+                    ParseJsonString(items[ii]);
+                else
+                    tempData = items[ii];
 
-    /// <summary>
-    /// Checks which inputs are currently held down
-    /// Normally this would send a message to the server
-    /// </summary>
-    private void ProcessInputs()
-    {
-      if (movingPressed)
-        Console.WriteLine("moving");
-      if (mousePressed)
-        Console.WriteLine("mouse pressed");
-    }
+            }
+            catch (Exception ex)
+            {
+                OnNetworkError("ERROR: Network Error !!  [Controller.OnWallReceive]" +
+                                "\n    " + ex.Message);
+                return;
+            }
+            UpdateArrived();
+            Networking.GetData(state);
+        }
 
-    /// <summary>
-    /// Example of handling movement request
-    /// </summary>
-    public void HandleMoveRequest(/* pass info about which command here */)
-    {
-      movingPressed = true;
-    }
+        /// <summary>
+        /// Parses passed json string and deserializes recognized objects to update client model world
+        /// </summary>
+        /// <param name="json"></param>
+        private void ParseJsonString(string json)
+        {
+            JObject jObj = JObject.Parse(json);
+            IList<string> keys = jObj.Properties().Select(p => p.Name).ToList();
+            foreach (string key in keys)
+            {
+                switch (key)
+                {
+                    case "wall":
+                        var wall = JsonConvert.DeserializeObject<Wall>(json);
+                        world.Walls.Add(wall.Id, wall);
+                        return;
+                    case "tank":
+                        var tank = JsonConvert.DeserializeObject<Tank>(json);
+                        if (world.Tanks.ContainsKey(tank.Id))
+                            if (tank.IsDead)
+                                world.Tanks.Remove(tank.Id);
+                            else
+                                world.Tanks[tank.Id] = tank;
+                        else if (!tank.IsDead)
+                            world.Tanks.Add(tank.Id, tank);
+                        return;
+                    case "proj":
+                        var proj = JsonConvert.DeserializeObject<Projectile>(json);
+                        if (world.Projectiles.ContainsKey(proj.Id))
+                            if (proj.IsDead)
+                                world.Projectiles.Remove(proj.Id);
+                            else
+                                world.Projectiles[proj.Id] = proj;
+                        else if (!proj.IsDead)
+                            world.Projectiles.Add(proj.Id, proj);
+                        return;
+                    case "beam":
+                        var beam = JsonConvert.DeserializeObject<Beam>(json);
+                        world.Beams.Add(beam.Id, beam);
+                        return;
+                    case "power":
+                        var powerup = JsonConvert.DeserializeObject<Powerup>(json);
+                        if (world.Powerups.ContainsKey(powerup.Id))
+                            if (powerup.IsDead)
+                                world.Powerups.Remove(powerup.Id);
+                            else
+                                world.Powerups[powerup.Id] = powerup;
+                        else if (!powerup.IsDead)
+                            world.Powerups.Add(powerup.Id, powerup);
+                        return;
+                    default:
+                        continue;
+                }
+            }
+            throw new JsonException("ERROR: JSON not of Recognized type !!  [Controller.ParseJsonString]");
+        }
 
-    /// <summary>
-    /// Example of canceling a movement request
-    /// </summary>
-    public void CancelMoveRequest(/* pass info about which command here */)
-    {
-      movingPressed = false;
-    }
 
-    /// <summary>
-    /// Example of handling mouse request
-    /// </summary>
-    public void HandleMouseRequest(/* pass info about which button here */)
-    {
-      mousePressed = true;
-    }
+        /// <summary>
+        /// Checks which inputs are currently held down
+        /// Normally this would send a message to the server
+        /// </summary>
+        private void ProcessInputs()
+        {
+            if (movingPressed)
+                Console.WriteLine("moving");        //TODO: Handle Move Event
+            if (mousePressed)
+                Console.WriteLine("mouse pressed"); //TODO: Handle Fire Event
+        }
 
-    /// <summary>
-    /// Example of canceling mouse request
-    /// </summary>
-    public void CancelMouseRequest(/* pass info about which button here */)
-    {
-      mousePressed = false;
-    }
+        /// <summary>
+        /// Example of handling movement request
+        /// </summary>
+        public void HandleMoveRequest(/* pass info about which command here */)
+        {
+            movingPressed = true;
+        }
+
+        /// <summary>
+        /// Example of canceling a movement request
+        /// </summary>
+        public void CancelMoveRequest(/* pass info about which command here */)
+        {
+            movingPressed = false;
+        }
+
+        /// <summary>
+        /// Example of handling mouse request
+        /// </summary>
+        public void HandleMouseRequest(/* pass info about which button here */)
+        {
+            mousePressed = true;
+        }
+
+        /// <summary>
+        /// Example of canceling mouse request
+        /// </summary>
+        public void CancelMouseRequest(/* pass info about which button here */)
+        {
+            mousePressed = false;
+        }
     }
 }

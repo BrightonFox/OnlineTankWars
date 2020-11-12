@@ -19,9 +19,9 @@ using TankWars.MathUtils;
 namespace TankWars
 {
     [JsonObject(MemberSerialization.OptIn)]
-    public class Powerup
+    public abstract class IPowerup
     {
-        public Powerup()
+        public IPowerup()
         {
             // TODO: figure out what goes here...
         }
