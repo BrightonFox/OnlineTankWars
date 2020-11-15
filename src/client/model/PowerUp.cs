@@ -16,7 +16,7 @@ using TankWars.MathUtils;
 
 namespace TankWars.Client.Model
 {
-    public class Powerup : IPowerup
+    public class Powerup : TankWars.JsonObjects.Powerup
     {
         public int Id { get { return _id; } private set {return;} }
 

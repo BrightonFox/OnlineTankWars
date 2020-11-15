@@ -16,23 +16,23 @@ using Newtonsoft.Json;
 using TankWars.MathUtils;
 
 
-namespace TankWars
+namespace TankWars.JsonObjects
 {
     [JsonObject(MemberSerialization.OptIn)]
-    public abstract class ICommand
+    public abstract class Command
     {
-        public ICommand()
+        public Command()
         {
             //TODO: Figure out what to do here...
         }
 
         [JsonProperty(PropertyName = "moving")]
-        protected string _moving;
+        protected string _movement;
 
         [JsonProperty(PropertyName = "fire")]
         protected string _fire;
 
         [JsonProperty(PropertyName = "tdir")]
-        protected Vector2D _tankDirection;
+        protected Vector2D _turretDirection;
     }
 }

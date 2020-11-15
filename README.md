@@ -59,10 +59,10 @@ We have a general model design that will get extended as appropriate for a clien
 #### Controller
 -[X] Set up Network Capabilities
   -[X] Code Json receive
-  -[ ] Code Json send
--[ ] Create Events for the the View
--[ ] Create Retrieve Methods for the View
--[ ] Finish commenting the code
+  -[X] Code Json send
+-[X] Create Events for the the View
+-[X] Create Retrieve Methods for the View
+-[X] Finish commenting the code
 
 #### View 
 -[ ] Import Drawing Panel from Lab 12

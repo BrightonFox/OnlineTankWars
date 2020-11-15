@@ -14,31 +14,34 @@
 using System;
 using System.Collections.Generic;
 
+using TankWars.JsonObjects;
+
+
 namespace TankWars
 {
-    public abstract class IWorld
-  {
-    // In reality, these should not be public,
-    // but for the purposes of this lab, the "World" 
-    // class is just a wrapper around these two fields.
-    // public Dictionary<int, IPlayer> Players;
-    public Dictionary<int, ITank> Tanks;
-    public Dictionary<int, IPowerup> Powerups;
-    public Dictionary<int, IWall> Walls;
-    public Dictionary<int, IProjectile> Projectiles;
-    
-    public int size
-    { get; private set; }
-
-    public IWorld(int _size)
+    public abstract class ProtoWorld
     {
-      Tanks = new Dictionary<int, ITank>();
-      Powerups = new Dictionary<int, IPowerup>();
-      Walls = new Dictionary<int, IWall>();
-      Projectiles = new Dictionary<int, IProjectile>();
+        // In reality, these should not be public,
+        // but for the purposes of this lab, the "World" 
+        // class is just a wrapper around these two fields.
+        // public Dictionary<int, IPlayer> Players;
+        public Dictionary<int, Tank> Tanks;
+        public Dictionary<int, Powerup> Powerups;
+        public Dictionary<int, TankWars.JsonObjects.Wall> Walls;
+        public Dictionary<int, Projectile> Projectiles;
 
-      size = _size;
+        public int size
+        { get; private set; }
+
+        public ProtoWorld(int _size)
+        {
+            Tanks = new Dictionary<int, Tank>();
+            Powerups = new Dictionary<int, Powerup>();
+            Walls = new Dictionary<int, TankWars.JsonObjects.Wall>();
+            Projectiles = new Dictionary<int, Projectile>();
+
+            size = _size;
+        }
+
     }
-
-  }
 }

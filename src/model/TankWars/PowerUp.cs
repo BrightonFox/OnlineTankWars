@@ -16,12 +16,12 @@ using Newtonsoft.Json;
 using TankWars.MathUtils;
 
 
-namespace TankWars
+namespace TankWars.JsonObjects
 {
     [JsonObject(MemberSerialization.OptIn)]
-    public abstract class IPowerup
+    public abstract class Powerup
     {
-        public IPowerup()
+        public Powerup()
         {
             // TODO: figure out what goes here...
         }

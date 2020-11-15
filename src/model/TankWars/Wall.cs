@@ -16,12 +16,12 @@ using Newtonsoft.Json;
 using TankWars.MathUtils;
 
 
-namespace TankWars
+namespace TankWars.JsonObjects
 {
     [JsonObject(MemberSerialization.OptIn)]
-    public abstract class IWall
+    public abstract class Wall
     {
-        public IWall()
+        public Wall()
         {
             //TODO: figure out what goes here...
         }

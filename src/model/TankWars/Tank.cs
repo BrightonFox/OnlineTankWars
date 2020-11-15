@@ -16,12 +16,12 @@ using System;
 using Newtonsoft.Json;
 using TankWars.MathUtils;
 
-namespace TankWars
+namespace TankWars.JsonObjects
 {
     [JsonObject(MemberSerialization.OptIn)]
-    public abstract class ITank
+    public abstract class Tank
     {
-        public ITank()
+        public Tank()
         {
             //TODO: figureout what goes here....
         }
@@ -36,10 +36,10 @@ namespace TankWars
         protected Vector2D _location;
 
         [JsonProperty(PropertyName = "bdir")]
-        protected Vector2D _barrelDirection;
+        protected Vector2D _bodyDirection;
 
         [JsonProperty(PropertyName = "tdir")]
-        protected Vector2D _direction;
+        protected Vector2D _turretDirection;
 
         [JsonProperty(PropertyName = "score")]
         protected int _score;

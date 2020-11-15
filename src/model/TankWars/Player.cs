@@ -15,29 +15,10 @@ using System;
 
 namespace TankWars
 {
-    public abstract class IPlayer
+    public abstract class ProtoPlayer
     {
-        private bool idSet = false;
-        public IPlayer(string name)
-        {
-            Name = name;
-        }
-
-        public string Name { get; private set; }
-        public int Id
-        {
-            get
-            {
-                return Id;
-            }
-            set
-            {
-                if (!idSet)
-                {
-                    Id = value;
-                    idSet = true;
-                }
-            }
-        }
+        
+        //TODO: whatever the server needs (prob.s just get rid of it)
+        
     }
 }

@@ -16,7 +16,7 @@ using TankWars.MathUtils;
 
 namespace TankWars.Client.Model
 {
-    public class Wall : IWall
+    public class Wall : TankWars.JsonObjects.Wall
     {
         public int Id { get { return _id; } private set {return;} }
 

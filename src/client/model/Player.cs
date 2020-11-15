@@ -13,12 +13,37 @@
 
 using System;
 
+using TankWars.MathUtils;
+
 namespace TankWars.Client.Model
 {
-    public class Player : IPlayer
+    public class Player
     {
-        public Player(string name) : base(name)
+        public Player(string name) : base()
         {
+            Name = name;
         }
+        
+        public bool IdSet { get; private set;}
+
+        public string Name { get; private set;}
+
+        public int Id
+        {
+            get
+            {
+                return Id;
+            }
+            set
+            {
+                if (!IdSet)
+                {
+                    Id = value;
+                    IdSet = true;
+                }
+            }
+        }
+
+        public Vector2D TurretDirection;
     }
 }

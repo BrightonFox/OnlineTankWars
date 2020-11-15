@@ -17,18 +17,18 @@ using TankWars.MathUtils;
 
 namespace TankWars.Client.Model
 {
-    public class Tank : ITank
+    public class Tank : TankWars.JsonObjects.Tank
     {
 
         public int Id { get {return _id;} private set {return;}}
 
-        public string PlayerName { get {return _playerName;} private set {return;}}
+        public string PlayerName { get {return _playerName;} protected set {return;}}
 
         public Vector2D Location { get {return _location;} private set {return;}}
         
-        public Vector2D BarrelDirection { get {return _barrelDirection;} private set {return;}}
+        public Vector2D BarrelDirection { get {return _bodyDirection;} private set {return;}}
 
-        public Vector2D Direction { get {return _direction;} private set {return;}}
+        public Vector2D Direction { get {return _turretDirection;} private set {return;}}
 
         public int Score { get { return _score; } private set {return;} }
 

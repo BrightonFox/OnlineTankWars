@@ -16,12 +16,12 @@ using Newtonsoft.Json;
 using TankWars.MathUtils;
 
 
-namespace TankWars
+namespace TankWars.JsonObjects
 {
     [JsonObject(MemberSerialization.OptIn)]
-    public abstract class IProjectile
+    public abstract class Projectile
     {
-        public IProjectile()
+        public Projectile()
         {
             // TODO: figure out what goes here...
         }

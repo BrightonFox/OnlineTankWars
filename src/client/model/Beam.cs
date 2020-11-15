@@ -16,9 +16,10 @@ using TankWars.MathUtils;
 
 namespace TankWars.Client.Model
 {
-    public class Beam : IBeam
+    public class Beam : TankWars.JsonObjects.Beam
     {
 
+        private int _lifeSpan = 0;
         public int Id { get {return _id;} private set {return;} }
         
         public Vector2D Origin { get {return _origin;} private set {return;} }
@@ -26,5 +27,10 @@ namespace TankWars.Client.Model
         public Vector2D Direction { get {return _direction;} private set {return;} }
 
         public int OwnerId { get { return _ownerId; } private set { return; } }
+
+        public int LifeSpan {
+            get { return _lifeSpan++;}
+            private set {_lifeSpan = value;}
+        }
     }
 }

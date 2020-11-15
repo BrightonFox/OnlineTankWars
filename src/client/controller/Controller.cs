@@ -18,53 +18,87 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Timers;
 using System.Text.RegularExpressions;
+using System.Windows.Input;
+
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
-// using Json;
+
 using TankWars.Client.Model;
 using TankWars.NetworkUtil;
+using TankWars.MathUtils;
 
 namespace TankWars.Client.Control
 {
 
     public delegate void NetworkErrorOccuredHandler(string msg);
     public delegate void ServerUpdateHandler();
-
+    public delegate void GetTargetPosHandler(out Vector2D targetPos);
+    // public delegate Vector2D GetTargetPosHandler();
 
     public class Controller
     {
-        private readonly Regex InitMsgPattern = new Regex(@"^(\d+)\n(\d+)\n$");
-        // readonly Regex ObjectMsgPattern = new Regex(@"\n");
-        private string tempData = "";
+        private static readonly Regex MsgSplitPattern = new Regex(@"(?<=[\n])");
+
+        private SocketState State;
         private bool movingPressed = false;
         private bool mousePressed = false;
+        private string moveDir;
+        private string fireType;
+        private Vector2D fireDir;
+
 
         public event NetworkErrorOccuredHandler OnNetworkError;
         public event NetworkErrorOccuredHandler OnNetworkConnectionError;
         public event ServerUpdateHandler UpdateArrived;
+        public event GetTargetPosHandler GetTargetPos;
 
-        public Player player;
-        public World world;
+
+        public Player Player;   //! If there is a compile error this might be it!
+        public World World;     //! If there is a compile error this might be it!
 
 
         public Controller()
         {
-            this.UpdateArrived += this.ProcessInputs;
+            this.UpdateArrived += this.SendCommand;
+            this.UpdateArrived += this.GameLoop;
+            //TODO: whatever else needs to be done here...
         }
 
+
+        #region GameLoop
+        /// <summary>
+        /// Logic that needs to be done every frame agnostic of the view.
+        /// </summary>
+        private void GameLoop()
+        {
+            // Handle the life span of a beam ----
+            lock (World.Beams)
+            {
+                foreach (Beam beam in World.Beams.Values)
+                    if (beam.LifeSpan > 30)
+                        World.Beams.Remove(beam.Id);
+            }
+
+            //TODO: handle the rest of the logic that should be void of the view...
+        }
+
+        #endregion
+
+
+        #region NetworkConnect
         /// <summary>
         /// Connects to server.
         /// <para>
-        /// !! IT IS RECOMMENDED TO RUN THIS IN A SEPARATE THREAD !!
+        /// !! IT IS RECOMMENDED TO RUN THIS IN A SEPARATE THREAD FROM THE VIEWS MAIN THREAD !!
         /// </para>
         /// </summary>
-        /// <param name="addr"></param>
-        /// <param name="name"></param>
+        /// <param name="addr">An ipv4 address or domain name for the server</param>
+        /// <param name="name">The name of the player, max 16 characters</param>
         public void ConnectToServer(string addr, string name)
         {
             if (name.Length > 16)
                 name = name.Substring(0, 16);
-            player = new Player(name);
+            Player = new Player(name);
             Networking.ConnectToServer(OnConnect, addr, 11000);
         }
 
@@ -75,19 +109,21 @@ namespace TankWars.Client.Control
         /// <param name="state"></param>
         private void OnConnect(SocketState state)
         {
+            State = state;
             if (state.ErrorOccured)
             {
                 OnNetworkConnectionError(state.ErrorMessage);
                 return;
             }
-            Networking.Send(state.TheSocket, player.Name + "\n");
+            Networking.Send(state.TheSocket, Player.Name + "\n");
             state.OnNetworkAction = OnInitMsgReceive;
             Networking.GetData(state);
         }
 
         /// <summary>
         /// Retrieves player ID and world size from server initial messages
-        /// </summary>
+        /// !! If we never draw anyting this is prob.s the cultrate !!
+        /// /// </summary>
         /// <param name="state"></param>
         private void OnInitMsgReceive(SocketState state)
         {
@@ -95,57 +131,83 @@ namespace TankWars.Client.Control
                 OnNetworkError(state.ErrorMessage);
 
 
-            Match match = InitMsgPattern.Match(state.GetData());
-            if (!match.Success)
-            {
-                Networking.GetData(state);
-                return;
-            }
+            var items = MsgSplitPattern.Split(state.GetData());
             try
             {
-                player.Id = Int32.Parse(match.Groups[1].Value);
-                world = new World(Int32.Parse(match.Groups[2].Value));
+                int ii;
+                for (ii = 0; ii < items.Length - 1; ii++)
+                {
+                    if (items[ii].Length == 0) // is it empty?
+                        continue;
+                    else if (items[ii].Contains("{"))   // is it a json object that is not a wall?
+                    {
+                        state.OnNetworkAction = OnMsgReceive;
+                        ParseJsonMsgs((new ArraySegment<string>(items, ii, items.Length)).ToArray<string>(), state);
+                    }
+                    else if (!Player.IdSet) // if not a json do we have the player id yet? (is it the player id?)
+                        Player.Id = Int32.Parse(items[ii].Substring(0, items[ii].Length - 2));
+                    else                    // we have player id it must be the world size !
+                        World = new World(Int32.Parse(items[ii].Substring(0, items[ii].Length - 2)));
+
+                    // Clear out the appropriate section of the data section
+                    state.RemoveData(0, items[ii].Length);
+                }
+
+                // check last item to see if it is complete ----
+                if (items[++ii][items[ii].Length - 1] == '\n')  // is it a wall?
+                {
+                    if (items[ii].Contains("{"))   // is it a json object that is not a wall?
+                    {
+                        state.OnNetworkAction = OnMsgReceive;
+                        ParseJsonString(items[ii]);
+                    }
+                    else if (!Player.IdSet)        // if not a json do we have the player id yet? (is it the player id?)
+                        Player.Id = Int32.Parse(items[ii].Substring(0, items[ii].Length - 2));
+                    else if (World == null)        // we have player id it must be the world size !
+                    {
+                        World = new World(Int32.Parse(items[ii].Substring(0, items[ii].Length - 2)));
+                        state.OnNetworkAction = OnMsgReceive;
+                    }                    
+
+                    // Clear out the appropriate section of the data section
+                    state.RemoveData(0, items[ii].Length);
+                }
+                // check to see of we hae received all walls and therefore finished init process
+                if (World?.Tanks.Count > 0)
+                    state.OnNetworkAction = OnMsgReceive;
             }
-            catch (Exception)
+            catch (Exception ex)
             {
-                OnNetworkError("ERROR: failed to parse player ID or World size from Server message !!  [Controller.OnMsgReceive]");
+                OnNetworkError("ERROR: failed to parse player ID or World size from Server message !!  [Controller.OnMsgReceive]\n" +
+                                "   " + ex.Message);
                 state.ClearData();
                 return;
             }
-            state.ClearData();
-            state.OnNetworkAction = OnMsgReceive;
+            Networking.GetData(state);
         }
 
+        #endregion
 
-        /// <summary
-        /// Retrieves messages from server representing state of all game objects
-        /// to update client model world
+
+        #region NetworkReceive
+        /// <summary>
+        /// Retrieves messages from server representing state of all game objects,
+        ///   to update client model world.
         /// </summary>
         /// <param name="state"></param>
         private void OnMsgReceive(SocketState state)
         {
             if (state.ErrorOccured)
                 OnNetworkError(state.ErrorMessage);
-            // Match match = ObjectMsgPattern.Match(state.GetData());
-            var items = Regex.Split(tempData + state.GetData(), @"\n");
-            state.ClearData();
 
+            var items = MsgSplitPattern.Split(state.GetData());
             try
             {
-                int ii = 0;
-                for (ii = 0; ii < items.Length - 1; ii++)
-                {
-                    ParseJsonString(items[ii]);
-                }
-                if (items[++ii] == "")
-                    ParseJsonString(items[ii]);
-                else
-                    tempData = items[ii];
-
+                ParseJsonMsgs(items, state);
             }
             catch (Exception ex)
             {
-                OnNetworkError("ERROR: Network Error !!  [Controller.OnWallReceive]" +
+                OnNetworkError("ERROR: Network Error !!  [Controller.OnMsgReceive]" +
                                 "\n    " + ex.Message);
                 return;
             }
@@ -153,8 +215,38 @@ namespace TankWars.Client.Control
             Networking.GetData(state);
         }
 
+
         /// <summary>
-        /// Parses passed json string and deserializes recognized objects to update client model world
+        /// Handles each json object contained in the passed <paramref name="msgs"/> string array.
+        /// </summary>
+        /// <param name="msgs"></param>
+        /// <param name="state"></param>
+        private void ParseJsonMsgs(string[] msgs, SocketState state)
+        {
+            int ii;
+            for (ii = 0; ii < msgs.Length - 1; ii++)
+            {
+                if (msgs[ii].Length == 0)
+                    continue;
+
+                ParseJsonString(msgs[ii]);
+
+                state.RemoveData(0, msgs[ii].Length);
+            }
+
+            // verify that the last item is a complete json object and handle if so
+            if (msgs[++ii][msgs[ii].Length - 1] == '\n')
+            {
+                ParseJsonString(msgs[ii]);
+
+                state.RemoveData(0, msgs[ii].Length);
+            }
+        }
+
+
+        /// <summary>
+        /// Parses passed json string into the appropriate type,
+        ///   and deserializes recognized objects to update client model world.
         /// </summary>
         /// <param name="json"></param>
         private void ParseJsonString(string json)
@@ -165,43 +257,55 @@ namespace TankWars.Client.Control
             {
                 switch (key)
                 {
-                    case "wall":
-                        var wall = JsonConvert.DeserializeObject<Wall>(json);
-                        world.Walls.Add(wall.Id, wall);
-                        return;
                     case "tank":
-                        var tank = JsonConvert.DeserializeObject<Tank>(json);
-                        if (world.Tanks.ContainsKey(tank.Id))
-                            if (tank.IsDead)
-                                world.Tanks.Remove(tank.Id);
-                            else
-                                world.Tanks[tank.Id] = tank;
-                        else if (!tank.IsDead)
-                            world.Tanks.Add(tank.Id, tank);
+                        var tank = jObj.ToObject<Tank>();
+                        lock (World.Tanks)
+                        {
+                            if (World.Tanks.ContainsKey(tank.Id))
+                                if (tank.IsDisconnected)
+                                    World.Tanks.Remove(tank.Id);
+                                else
+                                    World.Tanks[tank.Id] = tank;
+                            else if (!tank.IsDisconnected)
+                                World.Tanks.Add(tank.Id, tank);
+                        }
                         return;
                     case "proj":
-                        var proj = JsonConvert.DeserializeObject<Projectile>(json);
-                        if (world.Projectiles.ContainsKey(proj.Id))
-                            if (proj.IsDead)
-                                world.Projectiles.Remove(proj.Id);
-                            else
-                                world.Projectiles[proj.Id] = proj;
-                        else if (!proj.IsDead)
-                            world.Projectiles.Add(proj.Id, proj);
-                        return;
+                        var proj = jObj.ToObject<Projectile>();
+                        lock (World.Projectiles)
+                        {
+                            if (World.Projectiles.ContainsKey(proj.Id))
+                                if (proj.IsDead)
+                                    World.Projectiles.Remove(proj.Id);
+                                else
+                                    World.Projectiles[proj.Id] = proj;
+                            else if (!proj.IsDead)
+                                World.Projectiles.Add(proj.Id, proj);
+                            return;
+                        }
                     case "beam":
-                        var beam = JsonConvert.DeserializeObject<Beam>(json);
-                        world.Beams.Add(beam.Id, beam);
+                        var beam = jObj.ToObject<Beam>();
+                        lock (World.Beams)
+                        {
+                            World.Beams.Add(beam.Id, beam);
+                        }
                         return;
                     case "power":
-                        var powerup = JsonConvert.DeserializeObject<Powerup>(json);
-                        if (world.Powerups.ContainsKey(powerup.Id))
-                            if (powerup.IsDead)
-                                world.Powerups.Remove(powerup.Id);
-                            else
-                                world.Powerups[powerup.Id] = powerup;
-                        else if (!powerup.IsDead)
-                            world.Powerups.Add(powerup.Id, powerup);
+                        var powerup = jObj.ToObject<Powerup>();
+                        lock (World.Powerups)
+                        {
+                            if (World.Powerups.ContainsKey(powerup.Id))
+                                if (powerup.IsDead)
+                                    World.Powerups.Remove(powerup.Id);
+                                else
+                                    World.Powerups[powerup.Id] = powerup;
+                            else if (!powerup.IsDead)
+                                World.Powerups.Add(powerup.Id, powerup);
+                            return;
+                        }
+                    case "wall":
+                        var wall = jObj.ToObject<Wall>();
+                        World.Walls.Add(wall.Id, wall);
                         return;
                     default:
                         continue;
@@ -209,50 +313,107 @@ namespace TankWars.Client.Control
             }
             throw new JsonException("ERROR: JSON not of Recognized type !!  [Controller.ParseJsonString]");
         }
+        #endregion
 
 
+        #region NetworkingSend
         /// <summary>
-        /// Checks which inputs are currently held down
-        /// Normally this would send a message to the server
+        /// Checks which inputs are currently requested.
+        /// Sends it as a command to the server.
         /// </summary>
-        private void ProcessInputs()
+        private void SendCommand()
         {
-            if (movingPressed)
-                Console.WriteLine("moving");        //TODO: Handle Move Event
-            if (mousePressed)
-                Console.WriteLine("mouse pressed"); //TODO: Handle Fire Event
+            Command command;
+            lock (Player)
+            {
+                if (mousePressed && movingPressed)
+                {
+                    command = new Command(moveDir, fireType, fireDir);
+                    Networking.Send(State.TheSocket, JsonConvert.SerializeObject(command) + '\n');
+                }
+                else if (movingPressed)
+                {
+                    command = new Command(moveDir, fireType, GetPlayerTurretDir());
+                    Networking.Send(State.TheSocket, JsonConvert.SerializeObject(command) + '\n');
+                }
+            }
+        }
+        #endregion
+
+
+        #region MovementControls
+        /// <summary>
+        /// Updates the controller to show that the given direction is being help down
+        /// </summary>
+        /// <param name="direction">"up", "down", "left", "right" according to how the player tank should move</param>
+        public void HandleMoveRequest(string direction)
+        {
+            lock (Player)
+            {
+                movingPressed = true;
+                moveDir = direction;
+            }
         }
 
         /// <summary>
-        /// Example of handling movement request
+        /// Updates the controller to show that the given direction is no longer being help down
         /// </summary>
-        public void HandleMoveRequest(/* pass info about which command here */)
+        /// <param name="direction">"up", "down", "left", or "right" according to how the player tank should move</param>
+        public void CancelMoveRequest(string direction)
         {
-            movingPressed = true;
+            lock (Player)
+            {
+                if (moveDir != direction)
+                    return;
+                movingPressed = false;
+                moveDir = "none";
+            }
         }
 
         /// <summary>
-        /// Example of canceling a movement request
+        /// Updates controller to show the mouse is being held down
         /// </summary>
-        public void CancelMoveRequest(/* pass info about which command here */)
+        /// <param name="direction">"main" or "alt" depending on regular fire or beam fire</param>
+        public void HandleMouseRequest(string fire)
         {
-            movingPressed = false;
+            lock (Player)
+            {
+                mousePressed = true;
+                fireType = fire;
+                fireDir = GetPlayerTurretDir();
+            }
         }
 
         /// <summary>
-        /// Example of handling mouse request
+        /// Updates the controller to show that the mouse is no longer being help down
         /// </summary>
-        public void HandleMouseRequest(/* pass info about which button here */)
+        /// <param name="direction">"main" or "alt" depending on regular fire or beam fire</param>
+        public void CancelMouseRequest(string fire)
         {
-            mousePressed = true;
+            lock (Player)
+            {
+                if (fireType != fire)
+                    return;
+                mousePressed = false;
+                fireType = "none";
+            }
         }
 
-        /// <summary>
-        /// Example of canceling mouse request
+        /// <summary>P
+        /// Trigger event to get get the curser position in world coordinates from the view.
+        /// Then calculate the vector between the player tank position and the target position.
+        /// Normalize it and return it.
         /// </summary>
-        public void CancelMouseRequest(/* pass info about which button here */)
+        /// <returns>NOrmalized vector representing the direction the player tank is aiming in</returns>
+        private Vector2D GetPlayerTurretDir()
         {
-            mousePressed = false;
+            GetTargetPos(out Vector2D targetPos);
+            var dir = targetPos - ((Tank)World.Tanks[Player.Id]).Location;
+            // var dir = GetTargetPos() - ((Tank)world.Tanks[player.Id]).Location;
+            dir.Normalize();
+            return fireDir;
         }
+
+        #endregion
     }
 }

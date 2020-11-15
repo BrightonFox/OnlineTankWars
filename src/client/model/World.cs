@@ -16,12 +16,18 @@ using System.Collections.Generic;
 
 namespace TankWars.Client.Model
 {
-    public class World : IWorld
+    public class World : ProtoWorld
     {
         public Dictionary<int, Beam> Beams;
+        // new public Dictionary<int, Tank> Tanks;
         
         public World(int _size) : base(_size)
         {
+        }
+
+        public Tank GetTank(int id)
+        {
+            return (Tank) Tanks[id];
         }
 
     }

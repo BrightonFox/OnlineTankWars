@@ -17,25 +17,15 @@ using TankWars.MathUtils;
 
 namespace TankWars.Client.Model
 {
-    public class Command : ICommand
+    public class Command : TankWars.JsonObjects.Command
     {
 
-        public string Moving
+        public Command(string movement, string fire, Vector2D turretDir) : base()
         {
-            get { return _moving; }
-            set { _moving = value; }
+            _movement = movement;
+            _fire = fire;
+            _turretDirection = turretDir;
         }
 
-        public string Fire
-        {
-            get { return _fire; }
-            set { _fire = value; }
-        }
-
-        public Vector2D TankDirection
-        {
-            get { return _tankDirection; }
-            set { _tankDirection = value; }
-        }
     }
 }

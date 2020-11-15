@@ -16,12 +16,12 @@ using Newtonsoft.Json;
 using TankWars.MathUtils;
 
 
-namespace TankWars
+namespace TankWars.JsonObjects
 {
     [JsonObject(MemberSerialization.OptIn)]
-    public abstract class IBeam
+    public abstract class Beam
     {
-        public IBeam()
+        public Beam()
         {
             // TODO: figure out what goes here...
         }
