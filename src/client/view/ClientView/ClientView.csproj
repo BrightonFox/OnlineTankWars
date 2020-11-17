@@ -33,6 +33,9 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
+    <Reference Include="Newtonsoft.Json, Version=12.0.0.0, Culture=neutral, PublicKeyToken=30ad4fe6b2a6aeed, processorArchitecture=MSIL">
+      <HintPath>..\..\..\..\packages\Newtonsoft.Json.12.0.3\lib\net45\Newtonsoft.Json.dll</HintPath>
+    </Reference>
     <Reference Include="System">
       <HintPath>C:\Program Files (x86)\Reference Assemblies\Microsoft\Framework\.NETFramework\v4.7.2\System.dll</HintPath>
     </Reference>
@@ -48,13 +51,13 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="../../controller/ClientController.csproj">
+    <ProjectReference Include="..\..\controller\ClientController.csproj">
       <Project>{2DD1B91E-89A1-4924-903A-5CA62EA41BD3}</Project>
-      <Name>TankWars.Client.Control</Name>
+      <Name>ClientController</Name>
     </ProjectReference>
-    <ProjectReference Include="../../model/ClientModel.csproj">
+    <ProjectReference Include="..\..\model\ClientModel.csproj">
       <Project>{63C5B48F-1582-4033-90B0-E7F14AD456BD}</Project>
-      <Name>TankWars.Client.Model</Name>
+      <Name>ClientModel</Name>
     </ProjectReference>
     <ProjectReference Include="..\..\..\model\TankWars\TankWars.csproj">
       <Project>{38e0edad-23b9-433f-9cfc-b6213368b23f}</Project>
@@ -75,6 +78,12 @@
     </Compile>
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <EmbeddedResource Include="MainForm.dje.resx">
+      <DependentUpon>MainForm.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="MainForm.resx">
+      <DependentUpon>MainForm.cs</DependentUpon>
+    </EmbeddedResource>
     <EmbeddedResource Include="Properties\Resources.resx">
       <Generator>ResXFileCodeGenerator</Generator>
       <LastGenOutput>Resources.Designer.cs</LastGenOutput>
@@ -85,6 +94,7 @@
       <DependentUpon>Resources.resx</DependentUpon>
       <DesignTime>True</DesignTime>
     </Compile>
+    <None Include="packages.config" />
     <None Include="Properties\Settings.settings">
       <Generator>SettingsSingleFileGenerator</Generator>
       <LastGenOutput>Settings.Designer.cs</LastGenOutput>

@@ -20,61 +20,37 @@ namespace TankWars.Client.View
         private const int menuSize = 40;
 
         // The controller handles updates from the "server"
-        // and notifies us via an event
+        // and notifies via an event
         private Controller controller;
 
-        // World is a simple container for Players and Powerups
-        // The controller owns the World, but we have a reference to it
-        private World World;
+        // World is a container for the game objects
+        private World world;
 
         public MainForm(Controller ctrl)
         {
             InitializeComponent();
             controller = ctrl;
-            World = controller.World;
+            // world = controller.World;
             controller.UpdateArrived += OnFrame;
+            controller.ServerConnectionMade += OnConnect;
+            controller.OnNetworkConnectionError += DisplayErrorMsg;
+            controller.OnNetworkError += DisplayErrorMsg;
 
             // - Set up the form. ------
+            this.Text = "Tank Wars - Client (JustBroken)";
+            nameText.MaxLength = 16;
             
+            connectButton.Click += OnBtnConnect;
+            disconnectButton.Click += OnBtnDisconnect;
+            this.FormClosing += OnBtnDisconnect;
 
             // - Set the window size --
             this.ClientSize = new Size(viewSize, viewSize + menuSize);
 
-            /* Provided GUI Code, manuals generated...      //TODO: Uncomment after figureing out GUI design
-            // Place and add the button
-            startButton = new Button();
-            startButton.Location = new Point(215, 5);
-            startButton.Size = new Size(70, 20);
-            startButton.Text = "Start";
-            startButton.Click += StartClick;
-            this.Controls.Add(startButton);
-
-            // Place and add the name label
-            nameLabel = new Label();
-            nameLabel.Text = "Name:";
-            nameLabel.Location = new Point(5, 10);
-            nameLabel.Size = new Size(40, 15);
-            this.Controls.Add(nameLabel);
-
-            // Place and add the name textbox
-            nameText = new TextBox();
-            nameText.Text = "player";
-            nameText.Location = new Point(50, 5);
-            nameText.Size = new Size(70, 15);
-            this.Controls.Add(nameText);
-
-            // Place and add the drawing panel
-            drawingPanel = new DrawingPanel(World);
-            drawingPanel.Location = new Point(0, menuSize);
-            drawingPanel.Size = new Size(viewSize, viewSize);
-            this.Controls.Add(drawingPanel);
-            */
-
             // - Set up key and mouse handlers ----
             this.KeyDown += HandleKeyDown;
             this.KeyUp += HandleKeyUp;
-            // drawingPanel.MouseDown += HandleMouseDown;       //TODO: Uncomment this after creating the GUI elements
-            // drawingPanel.MouseUp += HandleMouseUp;           //TODO: Uncomment this after creating the GUI elements
+            
         }
 
 
@@ -83,16 +59,46 @@ namespace TankWars.Client.View
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private void StartClick(object sender, EventArgs e)
+        private void OnBtnConnect(object sender, EventArgs e)
         {
             // - Disable the form controls
-            // startButton.Enabled = false;                     //TODO: Uncomment this after creating the GUI elements
-            // nameText.Enabled = false;
+            connectButton.Enabled = false;
+            nameText.Enabled = false;
+            serverAddressText.Enabled = false;
+            disconnectButton.Enabled = true;
             // - Enable the global form to capture key presses
-            KeyPreview = true;
+            this.KeyPreview = true;
             // - "connect" to the "server"
-            // controller.ProcessUpdatesFromServer();           //TODO: Update this line to match our controller
+            controller.ConnectToServer(serverAddressText.Text, nameText.Text);
         }
+
+        private void OnConnect()
+        {
+            // - Place and add the drawing panel
+            drawingPanel = new DrawingPanel(controller.World, viewSize);
+            drawingPanel.Location = new Point(0, menuSize);
+            drawingPanel.Size = new Size(viewSize, viewSize);
+            this.Controls.Add(drawingPanel);
+
+            drawingPanel.MouseDown += HandleMouseDown;
+            drawingPanel.MouseUp += HandleMouseUp;
+            controller.GetTargetPos += drawingPanel.GetTargetPos;
+        }
+
+
+        private void OnBtnDisconnect(object sender, EventArgs e)
+        {
+            // - Disable the form controls
+            connectButton.Enabled = true;
+            nameText.Enabled = true;
+            serverAddressText.Enabled = true;
+            disconnectButton.Enabled = false;
+            // - Disable the global form to capture key presses
+            this.KeyPreview = false;
+            // - Disconnect from the server
+            controller.DisconnectFromServer();
+        }
+
 
         /// <summary>
         /// Handler for the controller's UpdateArrived event
@@ -112,10 +118,31 @@ namespace TankWars.Client.View
         /// <param name="e"></param>
         private void HandleKeyDown(object sender, KeyEventArgs e)
         {
-            if (e.KeyCode == Keys.Escape)
-                Application.Exit();
-            // if (e.KeyCode == Keys.W)
-                // controller.HandleMoveRequest();      //TODO: Update this line to match our controller
+            switch (e.KeyCode)
+            {
+                case Keys.W:
+                case Keys.Up:
+                    controller.HandleMoveRequest("up");
+                    break;
+                case Keys.S:
+                case Keys.Down:
+                    controller.HandleMoveRequest("down");
+                    break;
+                case Keys.A:
+                case Keys.Left:
+                    controller.HandleMoveRequest("left");
+                    break;
+                case Keys.D:
+                case Keys.Right:
+                    controller.HandleMoveRequest("right");
+                    break;
+                case Keys.Space:
+                    controller.HandleMouseRequest("main");
+                    break;
+                case Keys.Enter:
+                    controller.HandleMouseRequest("alt");
+                    break;
+            }
 
             // Prevent other key handlers from running
             e.SuppressKeyPress = true;
@@ -130,8 +157,34 @@ namespace TankWars.Client.View
         /// <param name="e"></param>
         private void HandleKeyUp(object sender, KeyEventArgs e)
         {
-            // if (e.KeyCode == Keys.W)
-                // controller.CancelMoveRequest();      //TODO: Update this line to match our controller
+            switch (e.KeyCode)
+            {
+                case Keys.W:
+                case Keys.Up:
+                    controller.CancelMoveRequest("up");
+                    break;
+                case Keys.S:
+                case Keys.Down:
+                    controller.CancelMoveRequest("down");
+                    break;
+                case Keys.A:
+                case Keys.Left:
+                    controller.CancelMoveRequest("left");
+                    break;
+                case Keys.D:
+                case Keys.Right:
+                    controller.CancelMoveRequest("right");
+                    break;
+                case Keys.Space:
+                    controller.CancelMouseRequest("main");
+                    break;
+                case Keys.Enter:
+                    controller.CancelMouseRequest("alt");
+                    break;
+                case Keys.Escape:
+                    OnBtnDisconnect(this, new EventArgs());
+                    break;
+            }
         }
 
         /// <summary>
@@ -141,8 +194,15 @@ namespace TankWars.Client.View
         /// <param name="e"></param>
         private void HandleMouseDown(object sender, MouseEventArgs e)
         {
-            // if (e.Button == MouseButtons.Left)
-                // controller.HandleMouseRequest();         //TODO: Update this line to match our controller
+            switch (e.Button)
+            {
+                case MouseButtons.Left:
+                    controller.HandleMouseRequest("main");
+                    break;
+                case MouseButtons.Right:
+                    controller.HandleMouseRequest("alt");
+                    break;
+            }
         }
 
         /// <summary>
@@ -152,8 +212,21 @@ namespace TankWars.Client.View
         /// <param name="e"></param>
         private void HandleMouseUp(object sender, MouseEventArgs e)
         {
-            // if (e.Button == MouseButtons.Left)
-                // controller.CancelMouseRequest();     //TODO: Update this line to match our controller
+            switch (e.Button)
+            {
+                case MouseButtons.Left:
+                    controller.CancelMouseRequest("main");
+                    break;
+                case MouseButtons.Right:
+                    controller.CancelMouseRequest("alt");
+                    break;
+            }
+        }
+
+
+        private void DisplayErrorMsg(string msg)
+        {
+            MessageBox.Show(msg, "ERROR!!", MessageBoxButtons.OK, MessageBoxIcon.Error);
         }
 
     }

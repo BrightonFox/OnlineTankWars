@@ -4,7 +4,7 @@
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
-    <ProjectGuid>{DF2F54C1-5C35-47BA-A042-BF1583FFAE9A}</ProjectGuid>
+    <ProjectGuid>{D466C478-A44F-4CFC-8A38-2D451DD8CAE3}</ProjectGuid>
     <OutputType>Exe</OutputType>
     <RootNamespace>res</RootNamespace>
     <AssemblyName>res</AssemblyName>
@@ -34,6 +34,38 @@
   </PropertyGroup>
   <ItemGroup>
     <None Include="App.config" />
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="img\Background.png" />
+    <Content Include="img\BlueTank.png" />
+    <Content Include="img\BlueTurret.png" />
+    <Content Include="img\DarkTank.png" />
+    <Content Include="img\DarkTurret.png" />
+    <Content Include="img\GreenTank.png" />
+    <Content Include="img\GreenTurret.png" />
+    <Content Include="img\LightGreenTank.png" />
+    <Content Include="img\LightGreenTurret.png" />
+    <Content Include="img\OrangeTank.png" />
+    <Content Include="img\OrangeTurret.png" />
+    <Content Include="img\PurpleTank.png" />
+    <Content Include="img\PurpleTurret.png" />
+    <Content Include="img\RedTank.png" />
+    <Content Include="img\RedTurret.png" />
+    <Content Include="img\shot-blue.png" />
+    <Content Include="img\shot-brown.png" />
+    <Content Include="img\shot-green.png" />
+    <Content Include="img\shot-grey.png" />
+    <Content Include="img\shot-red.png" />
+    <Content Include="img\shot-violet.png" />
+    <Content Include="img\shot-white.png" />
+    <Content Include="img\shot-yellow.png" />
+    <Content Include="img\shot_blue.png" />
+    <Content Include="img\shot_grey.png" />
+    <Content Include="img\shot_red_new.png" />
+    <Content Include="img\shot_violet.png" />
+    <Content Include="img\WallSprite.png" />
+    <Content Include="img\YellowTank.png" />
+    <Content Include="img\YellowTurret.png" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

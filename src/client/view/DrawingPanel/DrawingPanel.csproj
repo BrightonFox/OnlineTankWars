@@ -58,5 +58,37 @@
       <Name>ClientModel</Name>
     </ProjectReference>
   </ItemGroup>
+  <ItemGroup>
+    <Content Include="img\Background.png" />
+    <Content Include="img\BlueShot.png" />
+    <Content Include="img\BlueTank.png" />
+    <Content Include="img\BlueTurret.png" />
+    <Content Include="img\DarkShot.png" />
+    <Content Include="img\DarkTank.png" />
+    <Content Include="img\DarkTurret.png" />
+    <Content Include="img\GreenShot.png" />
+    <Content Include="img\GreenTank.png" />
+    <Content Include="img\GreenTurret.png" />
+    <Content Include="img\LightGreenShot.png" />
+    <Content Include="img\LightGreenTank.png" />
+    <Content Include="img\LightGreenTurret.png" />
+    <Content Include="img\OrangeShot.png" />
+    <Content Include="img\OrangeTank.png" />
+    <Content Include="img\OrangeTurret.png" />
+    <Content Include="img\PurpleShot.png" />
+    <Content Include="img\PurpleShot1.png" />
+    <Content Include="img\PurpleTank.png" />
+    <Content Include="img\PurpleTurret.png" />
+    <Content Include="img\RedShot.png" />
+    <Content Include="img\RedTank.png" />
+    <Content Include="img\RedTurret.png" />
+    <Content Include="img\shot_blue.png" />
+    <Content Include="img\shot_grey.png" />
+    <Content Include="img\shot_red_new.png" />
+    <Content Include="img\WallSprite.png" />
+    <Content Include="img\YellowShot.png" />
+    <Content Include="img\YellowTank.png" />
+    <Content Include="img\YellowTurret.png" />
+  </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

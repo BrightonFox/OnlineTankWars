@@ -28,17 +28,19 @@ namespace TankWars.Client.Model
 
         public string Name { get; private set;}
 
+        private int _id;
+
         public int Id
         {
             get
             {
-                return Id;
+                return _id;
             }
             set
             {
                 if (!IdSet)
                 {
-                    Id = value;
+                    _id = value;
                     IdSet = true;
                 }
             }
