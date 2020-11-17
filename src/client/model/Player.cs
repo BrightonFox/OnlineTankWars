@@ -43,7 +43,5 @@ namespace TankWars.Client.Model
                 }
             }
         }
-
-        public Vector2D TurretDirection;
     }
 }

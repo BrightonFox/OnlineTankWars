@@ -55,7 +55,7 @@ We have a general model design that will get extended as appropriate for a clien
 -[X] Make General json Models
 -[X] Make client specific extension of json models
 -[ ] Finish commenting the code
-  -[X] Comment Method XML-Doc Headers.
+  -[ ] Comment Method XML-Doc Headers.
   -[ ] Comment inside Methods where necessary for clarity.
   -[ ] Comment Public Property & Field XML-Doc Headers.
   -[ ] Comment Class and Constructor XML-Doc Headers.
@@ -80,7 +80,7 @@ We have a general model design that will get extended as appropriate for a clien
 -[ ] Handle center on player tank
 -[ ] Create methods to register to appropriate controller events.
 -[ ] Finish commenting the code
-  -[X] Comment Method XML-Doc Headers.
+  -[ ] Comment Method XML-Doc Headers.
   -[ ] Comment inside Methods where necessary for clarity.
   -[ ] Comment Public Property & Field XML-Doc Headers.
   -[ ] Comment Class and Constructor XML-Doc Headers.

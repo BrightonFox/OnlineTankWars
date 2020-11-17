@@ -49,6 +49,10 @@
     <Service Include="{94E38DFF-614B-4cbd-B67C-F211BB35CE8B}" />
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\..\..\model\TankWars\TankWars.csproj">
+      <Project>{38e0edad-23b9-433f-9cfc-b6213368b23f}</Project>
+      <Name>TankWars</Name>
+    </ProjectReference>
     <ProjectReference Include="..\..\model\ClientModel.csproj">
       <Project>{63c5b48f-1582-4033-90b0-e7f14ad456bd}</Project>
       <Name>ClientModel</Name>

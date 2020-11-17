@@ -53,8 +53,8 @@ namespace TankWars.Client.Control
         public event GetTargetPosHandler GetTargetPos;
 
 
-        public Player Player;   //! If there is a compile error this might be it!
-        public World World;     //! If there is a compile error this might be it!
+        public Player Player {get; private set;}   //! If there is a compile error this might be it!
+        public World World {get; private set;}     //! If there is a compile error this might be it!
 
 
         public Controller()
