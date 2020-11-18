@@ -27,7 +27,6 @@ namespace TankWars.Client.View
         public void GetTargetPos(out MathUtils.Vector2D targetPos)
         {
             targetPos = new MathUtils.Vector2D(MousePosition.X, MousePosition.Y);
-
         }
 
         /// <summary>
