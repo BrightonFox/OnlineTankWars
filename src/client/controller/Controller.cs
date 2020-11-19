@@ -32,8 +32,6 @@ namespace TankWars.Client.Control
 
     public delegate void NetworkErrorOccuredHandler(string msg);
     public delegate void ServerUpdateHandler();
-    public delegate void GetTargetPosHandler(out Vector2D targetPos);
-    // public delegate Vector2D GetTargetPosHandler();
 
     public class Controller
     {
@@ -42,16 +40,16 @@ namespace TankWars.Client.Control
         private SocketState State;
         private bool movingPressed = false;
         private bool mousePressed = false;
-        private string moveDir;
-        private string fireType;
-        private Vector2D fireDir;
+        private string moveDir = "none";
+        private string fireType = "none";
+        private Vector2D targetDir;
 
 
         public event NetworkErrorOccuredHandler OnNetworkError;
         public event NetworkErrorOccuredHandler OnNetworkConnectionError;
         public event ServerUpdateHandler UpdateArrived;
         public event ServerUpdateHandler ServerConnectionMade;
-        public event GetTargetPosHandler GetTargetPos;
+        public event ServerUpdateHandler ServerDisconnected;
 
 
         public Player Player { get; private set; }   //! If there is a compile error this might be it!
@@ -119,7 +117,7 @@ namespace TankWars.Client.Control
         /// <summary>
         /// Retrieves player ID and world size from server initial messages
         /// !! If we never draw anyting this is prob.s the culprit !!
-        /// /// </summary>
+        /// </summary>
         /// <param name="state"></param>
         private void OnInitMsgReceive(SocketState state)
         {
@@ -136,7 +134,13 @@ namespace TankWars.Client.Control
                     if (items[ii].Length == 0) // is it empty?
                         continue;
                     else if (items[ii].Contains("{"))   // is it a json object that is not a wall?
-                        ParseJsonMsgs((new ArraySegment<string>(items, ii, items.Length - 1 - ii)).ToArray<string>(), state);
+                    {
+                        state.OnNetworkAction = OnMsgReceive;
+                        ParseJsonMsgs((new ArraySegment<string>(items, ii, items.Length - ii)).ToArray<string>(), state);
+                        ServerConnectionMade();
+                        Networking.GetData(state);
+                        return;
+                    }
                     else if (!Player.IdSet) // if not a json do we have the player id yet? (is it the player id?)
                         Player.Id = Int32.Parse(items[ii]);
                     else                    // we have player id it must be the world size !
@@ -147,26 +151,22 @@ namespace TankWars.Client.Control
                 }
 
                 // check last item to see if it is complete ----
-                if (++ii < items.Length && items[ii].Length > 0 && items[ii][items[ii].Length - 1] == '\n')  // is it a wall?
+                if (items[ii].Length > 0 && items[++ii][items[ii].Length - 1] == '\n')  // is it a wall?
                 {
                     if (items[ii].Contains("{"))   // is it a json object that is not a wall?
                     {
-                        state.OnNetworkAction = OnMsgReceive;
                         World.ParseJsonString(items[ii]);
                     }
                     else if (!Player.IdSet)        // if not a json do we have the player id yet? (is it the player id?)
-                        Player.Id = Int32.Parse(items[ii].Substring(0, items[ii].Length - 2));
+                        Player.Id = Int32.Parse(items[ii]/*.Substring(0, items[ii].Length - 2)*/);
                     else if (World == null)        // we have player id it must be the world size !
-                    {
-                        World = new World(Int32.Parse(items[ii].Substring(0, items[ii].Length - 2)), Player);
-                        state.OnNetworkAction = OnMsgReceive;
-                    }
+                        World = new World(Int32.Parse(items[ii]/*.Substring(0, items[ii].Length - 2)*/), Player);
 
                     // Clear out the appropriate section of the data section
                     state.RemoveData(0, items[ii].Length);
                 }
                 // check to see of we have received all walls and therefore finished init process
-                if (World?.GetTankIds().Count() > 0)
+                if (World != null /*&& World.HasPlayerTank()*/)
                 {
                     state.OnNetworkAction = OnMsgReceive;
                     ServerConnectionMade();
@@ -220,22 +220,25 @@ namespace TankWars.Client.Control
         private void ParseJsonMsgs(string[] msgs, SocketState state)
         {
             int ii;
-            for (ii = 0; ii < msgs.Length - 1; ii++)
+            lock (World)
             {
-                if (msgs[ii].Length == 0)
-                    continue;
+                for (ii = 0; ii < msgs.Length - 1; ii++)
+                {
+                    if (msgs[ii].Length == 0)
+                        continue;
 
-                World.ParseJsonString(msgs[ii]);
+                    World.ParseJsonString(msgs[ii]);
 
-                state.RemoveData(0, msgs[ii].Length);
-            }
+                    state.RemoveData(0, msgs[ii].Length);
+                }
 
-            // verify that the last item is a complete json object and handle if so
-            if (++ii < msgs.Length && msgs[ii].Length > 0 && msgs[ii][msgs[ii].Length - 1] == '\n')
-            {
-                World.ParseJsonString(msgs[ii]);
+                // verify that the last item is a complete json object and handle if so
+                if (++ii < msgs.Length && msgs[ii].Length > 0 && msgs[ii][msgs[ii].Length - 1] == '\n')
+                {
+                    World.ParseJsonString(msgs[ii]);
 
-                state.RemoveData(0, msgs[ii].Length);
+                    state.RemoveData(0, msgs[ii].Length);
+                }
             }
         }
 
@@ -249,18 +252,18 @@ namespace TankWars.Client.Control
         /// </summary>
         private void ProcessInputs()
         {
-            if (movingPressed || mousePressed || GetPlayerTurretDir() != World.GetTank(Player.Id).BarrelDirection)
+            lock (Player)
             {
-                Command command;
-                lock (Player)
+                if (movingPressed || mousePressed)
                 {
-                    if (mousePressed)
-                        command = new Command(moveDir, fireType, fireDir);
-                    else
-                        command = new Command(moveDir, fireType, GetPlayerTurretDir());
+                    var command = new Command(moveDir, fireType, targetDir);
+                    Networking.Send(State.TheSocket, JsonConvert.SerializeObject(command) + '\n');
                 }
-
-                Networking.Send(State.TheSocket, JsonConvert.SerializeObject(command) + '\n');
+                if (fireType == "alt")
+                {
+                    fireType = "none";
+                    mousePressed = false;
+                }
             }
         }
 
@@ -273,10 +276,13 @@ namespace TankWars.Client.Control
             Command command;
             lock (Player)
             {
-                command = new Command(moveDir, fireType, new Vector2D());
+                command = new Command(moveDir, fireType, targetDir);
             }
             State.OnNetworkAction = (s) => { return; };
             Networking.SendAndClose(State.TheSocket, JsonConvert.SerializeObject(command) + '\n');
+            ServerDisconnected();
+            // Player = null;
+            World = null;
         }
         #endregion
 
@@ -320,7 +326,6 @@ namespace TankWars.Client.Control
             {
                 mousePressed = true;
                 fireType = fire;
-                fireDir = GetPlayerTurretDir();
             }
         }
 
@@ -339,20 +344,13 @@ namespace TankWars.Client.Control
             }
         }
 
-        /// <summary>P
-        /// Trigger event to get get the curser position in world coordinates from the view.
-        /// Then calculate the vector between the player tank position and the target position.
-        /// Normalize it and return it.
-        /// </summary>
-        /// <returns>NOrmalized vector representing the direction the player tank is aiming in</returns>
-        private Vector2D GetPlayerTurretDir()
+        public void SetPlayerTurretDir(Vector2D targetPos)
         {
-            Vector2D targetPos = new Vector2D();
-            GetTargetPos(out targetPos);
-            var dir = targetPos - ((Tank)World.GetTank(Player.Id)).Location;
-            // var dir = GetTargetPos() - ((Tank)world.Tanks[player.Id]).Location;
-            dir.Normalize();
-            return fireDir;
+            targetPos.Normalize();
+            lock (Player)
+            {
+                targetDir = targetPos;
+            }
         }
 
         #endregion

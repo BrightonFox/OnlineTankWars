@@ -51,6 +51,8 @@ _&lt;Brief description of project&gt;_
 We have a general model design that will get extended as appropriate for a client model and sever model.
 
 ### Schedule
+-[ ] Complete `README.md` documentation.
+
 #### Model
 -[X] Make General json Models
 -[X] Make client specific extension of json models
@@ -79,26 +81,12 @@ We have a general model design that will get extended as appropriate for a clien
   -[X] Handle connection interface
 -[X] Handle center on player tank
 -[X] Create methods to register to appropriate controller events.
+-[ ] Add at least 1 new small feature
 -[ ] Finish commenting the code
   -[ ] Comment Method XML-Doc Headers.
   -[ ] Comment inside Methods where necessary for clarity.
   -[ ] Comment Public Property & Field XML-Doc Headers.
   -[ ] Comment Class and Constructor XML-Doc Headers.
-
-
-#### 11-18 Debug TODO:
--[ ] Add Server disconnect event and separate `OnBtnDisconnect`
--[ ] Figure out init networking issue.
-  -[ ] player id and world size not always being returned from network.
-    - Try running server on slower speed.
-  -[ ] figure out why we keep trying to add walls that already exist in dict
-    - We should not be receiving any duplicate walls at all.
-    - Check to see if when that occurs the data of the deserialized walls is correct.
-      - Try making a method in the `IWord` that deserialized to the base json classes then converts to client versions.
-      - Or try taking the advice of this [stack overflow page](https://stackoverflow.com/questions/22465868/deserialize-into-correct-child-objects) or [this one](https://stackoverflow.com/questions/5951043/how-to-inherit-the-attribute-from-interface-to-object-when-serializing-it-using)
-  -[ ] Figure out double error reporting issue.
-    - Check that exceptions are not thrown out of `OnNetworkAction` in `NetworkingUtils`
--[ ] Debug whatever is left...
 
 
 

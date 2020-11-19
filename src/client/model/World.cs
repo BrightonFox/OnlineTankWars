@@ -30,7 +30,20 @@ namespace TankWars.Client.Model
         
         public World(int _size, Player _player) : base(_size)
         {
+            Player = _player;
             Beams = new Dictionary<int, Beam>();
+        }
+
+
+        public bool HasPlayerTank()
+        {
+            if (Player == null) return false;
+            return Tanks.ContainsKey(Player.Id);
+        }
+
+        public Tank GetPlayerTank()
+        {
+            return (Tank)Tanks[Player.Id];
         }
 
         // public T Get<T>(int id) where T : new()
@@ -114,8 +127,6 @@ namespace TankWars.Client.Model
                 {
                     case "tank":
                         var tank = JsonConvert.DeserializeObject<Tank>(json);
-                        lock (Tanks)
-                        {
                             if (Tanks.ContainsKey(tank.Id))
                                 if (tank.IsDisconnected)
                                     Tanks.Remove(tank.Id);
@@ -123,12 +134,9 @@ namespace TankWars.Client.Model
                                     Tanks[tank.Id] = tank;
                             else if (!tank.IsDisconnected)
                                 Tanks.Add(tank.Id, tank);
-                        }
                         return;
                     case "proj":
                         var proj = JsonConvert.DeserializeObject<Projectile>(json);
-                        lock (Projectiles)
-                        {
                             if (Projectiles.ContainsKey(proj.Id))
                                 if (proj.IsDead)
                                     Projectiles.Remove(proj.Id);
@@ -137,18 +145,12 @@ namespace TankWars.Client.Model
                             else if (!proj.IsDead)
                                 Projectiles.Add(proj.Id, proj);
                             return;
-                        }
                     case "beam":
                         var beam = JsonConvert.DeserializeObject<Beam>(json);
-                        lock (Beams)
-                        {
                             Beams.Add(beam.Id, beam);
-                        }
                         return;
                     case "power":
                         var powerup = JsonConvert.DeserializeObject<Powerup>(json);
-                        lock (Powerups)
-                        {
                             if (Powerups.ContainsKey(powerup.Id))
                                 if (powerup.IsDead)
                                     Powerups.Remove(powerup.Id);
@@ -157,10 +159,10 @@ namespace TankWars.Client.Model
                             else if (!powerup.IsDead)
                                 Powerups.Add(powerup.Id, powerup);
                             return;
-                        }
                     case "wall":
                         var wall = JsonConvert.DeserializeObject<Wall>(json);
-                        Walls.Add(wall.Id, wall);
+                        if (!Walls.ContainsKey(wall.Id))
+                            Walls.Add(wall.Id, wall);
                         return;
                     default:
                         continue;
@@ -176,11 +178,13 @@ namespace TankWars.Client.Model
         /// <param name="lifeSpan">the number of frames a beam should be drawn for</param>
         public void ManageBeamLifeTimes(int lifeSpan)
         {
-            lock (Beams)
+            lock (this)
             {
-                foreach (Beam beam in Beams.Values)
-                    if (beam.LifeSpan > lifeSpan)
-                        Beams.Remove(beam.Id);
+                int[] beamIds = new int[Beams.Count];
+                Beams.Keys.CopyTo(beamIds, 0);
+                foreach (int beamId in beamIds)
+                    if (Beams[beamId].LifeSpan > lifeSpan)
+                        Beams.Remove(beamId);
             }
         }
     }

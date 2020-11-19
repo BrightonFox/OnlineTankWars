@@ -16,17 +16,42 @@ namespace TankWars.Client.View
 
         private World world;
         private int viewSize;
+        private static string imgDir = "../../../../../../res/img";
+
+        #region Images
+        private ImageCollection BlueImages = new ImageCollection("Blue");
+        private ImageCollection DarkImages = new ImageCollection("Dark");
+        private ImageCollection GreenImages = new ImageCollection("Green");
+        private ImageCollection LightGreenImages = new ImageCollection("LightGreen");
+        private ImageCollection OrangeImages = new ImageCollection("Orange");
+        private ImageCollection PurpleImages = new ImageCollection("Purple");
+        private ImageCollection RedImages = new ImageCollection("Red");
+        private ImageCollection YellowImages = new ImageCollection("Yellow");
+
+        private Image wallImage = Image.FromFile($"{imgDir}/WallSprite.png");
+        private Image backgroundImage = Image.FromFile($"{imgDir}/Background.png");
+
+        #endregion
+
 
         public DrawingPanel(World w, int viewSize)
         {
             DoubleBuffered = true;
             world = w;
             this.viewSize = viewSize;
+            this.BackColor = Color.FromArgb(200, 16, 32, 32);
         }
 
-        public void GetTargetPos(out MathUtils.Vector2D targetPos)
+        ~DrawingPanel()
         {
-            targetPos = new MathUtils.Vector2D(MousePosition.X, MousePosition.Y);
+            DisposeOfImages();
+        }
+
+        public MathUtils.Vector2D GetTargetPos()
+        {
+            var mousePos = this.PointToClient(MousePosition);
+            return new MathUtils.Vector2D(mousePos.X - (viewSize / 2),
+                                                mousePos.Y - (viewSize / 2));
         }
 
         /// <summary>
@@ -40,28 +65,42 @@ namespace TankWars.Client.View
             return (int)w + size / 2;
         }
 
-        private static string GetColorFromId(int id)
+        private ImageCollection GetColorFromId(int id)
         {
             switch (id % 8)
             {
                 case 0:
-                    return "Blue";
+                    return BlueImages;
                 case 1:
-                    return "DarkBlue";
+                    return DarkImages;
+                default:
                 case 2:
-                    return "Green";
+                    return GreenImages;
                 case 3:
-                    return "LightGreen";
+                    return LightGreenImages;
                 case 4:
-                    return "Orange";
+                    return OrangeImages;
                 case 5:
-                    return "Purple";
+                    return PurpleImages;
                 case 6:
-                    return "Red";
+                    return RedImages;
                 case 7:
-                    return "Yellow";
+                    return YellowImages;
             }
-            return "Major issue if you somehow see this";
+        }
+
+        public void DisposeOfImages()
+        {
+            BlueImages.Dispose();
+            DarkImages.Dispose();
+            GreenImages.Dispose();
+            LightGreenImages.Dispose();
+            OrangeImages.Dispose();
+            PurpleImages.Dispose();
+            RedImages.Dispose();
+            YellowImages.Dispose();
+            wallImage.Dispose();
+            backgroundImage.Dispose();
         }
 
 
@@ -102,6 +141,7 @@ namespace TankWars.Client.View
         {
             Tank p = o as Tank;
 
+            int maxHealthWidth = 60;
             int healthWidth = 60;
             if (p.Health == 2)
                 healthWidth = 40;
@@ -112,13 +152,17 @@ namespace TankWars.Client.View
 
             e.Graphics.SmoothingMode = System.Drawing.Drawing2D.SmoothingMode.AntiAlias;
             using (SolidBrush greenBrush = new SolidBrush(Color.LightGreen))
-            using (SolidBrush blackBrush = new SolidBrush(Color.Black))
+            using (SolidBrush whiteBrush = new SolidBrush(Color.White))
+            using (SolidBrush transBlackBrush = new SolidBrush(Color.FromArgb(128, 0, 0, 0)))
             {
-                var health = new Rectangle(-30, -32, healthWidth, 2);
+                var healthBkgd = new Rectangle(-30, -40, maxHealthWidth, 4);
+                e.Graphics.FillRectangle(transBlackBrush, healthBkgd);
+
+                var health = new Rectangle(-30, -40, healthWidth, 4);
                 e.Graphics.FillRectangle(greenBrush, health);
 
-                e.Graphics.DrawString(p.PlayerName + ": " + p.Score.ToString(), new Font("Consolas", 6), blackBrush, -32, 32);
-                
+                e.Graphics.DrawString(p.PlayerName + ": " + p.Score.ToString(), new Font("Consolas", 12), whiteBrush, -40, 32);
+
                 // e.Graphics.DrawString(p.Score.ToString(), new Font("Consolas", 6), blackBrush, -28, 34);
             }
         }
@@ -126,14 +170,16 @@ namespace TankWars.Client.View
         private void TankDrawer(object o, PaintEventArgs e)
         {
             Tank t = o as Tank;
-            string color = GetColorFromId(t.Id);
             e.Graphics.SmoothingMode = System.Drawing.Drawing2D.SmoothingMode.AntiAlias;
-            using (Image body = Image.FromFile($"img/{color}Tank.png"))
-            using (Image turret = Image.FromFile($"img/{color}Turret.png"))
-            {
-                e.Graphics.DrawImage(body, -32, -32, 64, 64);
-                e.Graphics.DrawImage(turret, -32, -32, 64, 64);
-            }
+            e.Graphics.DrawImage(GetColorFromId(t.Id).Body, -32, -32, 64, 64);
+        }
+
+        private void TurretDrawer(object o, PaintEventArgs e)
+        {
+            Tank t = o as Tank;
+            Image turret = GetColorFromId(t.Id).Turret;
+            e.Graphics.SmoothingMode = System.Drawing.Drawing2D.SmoothingMode.AntiAlias;
+            e.Graphics.DrawImage(turret, -32, -32, 64, 64);
         }
 
         /// <summary>
@@ -157,7 +203,7 @@ namespace TankWars.Client.View
                 // So if we want the circle centered on the powerups location, we have to offset it
                 // by half its size to the left (-width/2) and up (-height/2)
                 Rectangle r = new Rectangle(-(width / 2), -(height / 2), width, height);
-                Rectangle r2 = new Rectangle(-((width / 2) + width / 2), -((height / 2) + height / 2), width / 2, height / 2);
+                Rectangle r2 = new Rectangle(-(width / 4), -(height / 4), width / 2, height / 2);
 
                 e.Graphics.FillEllipse(redBrush, r);
                 e.Graphics.FillEllipse(whiteBrush, r2);
@@ -170,10 +216,7 @@ namespace TankWars.Client.View
         {
             Projectile p = o as Projectile;
             e.Graphics.SmoothingMode = System.Drawing.Drawing2D.SmoothingMode.AntiAlias;
-            using (Image proj = Image.FromFile($"img/{GetColorFromId(p.OwnerId)}Shot.png"))
-            {
-                e.Graphics.DrawImage(proj, -16, -16, 32, 32);
-            }
+            e.Graphics.DrawImage(GetColorFromId(p.OwnerId).Projectile, -16, -16, 32, 32);
         }
 
 
@@ -181,20 +224,22 @@ namespace TankWars.Client.View
         {
             Wall w = o as Wall;
 
-            int wallWidth = (int)Math.Abs(w.P1.GetX()-w.P2.GetX());
-            int wallHeight = (int)Math.Abs(w.P1.GetY()-w.P2.GetY());
-            int width = 50;
+            int wallWidth = (int)Math.Abs(w.P1.GetX() - w.P2.GetX());
+            int wallHeight = (int)Math.Abs(w.P1.GetY() - w.P2.GetY());
+            int unitSize = 50;
+
+            if (wallWidth == 0)
+                wallWidth = unitSize;
+            if (wallHeight == 0)
+                wallHeight = unitSize;
 
             e.Graphics.SmoothingMode = System.Drawing.Drawing2D.SmoothingMode.AntiAlias;
-            using (Image wall = Image.FromFile("img/WallSprite.png"))
-            {
-                if (wallWidth / width == 1)
-                    for (int jj=0; jj<wallHeight/width; jj++)
-                        e.Graphics.DrawImage(wall, -width/2, (-wallHeight/2)+(width*jj), width, width);
-                else
-                    for (int ii = 0; ii < wallWidth / width; ii++)
-                        e.Graphics.DrawImage(wall, (-wallWidth/2)+(width*ii), -width/2, width, width );
-            }
+            if (wallWidth / unitSize == 1)
+                for (int jj = 0; jj <= wallHeight / unitSize; jj++)
+                    e.Graphics.DrawImage(wallImage, -unitSize / 2, (-unitSize / 2) + (unitSize * jj), unitSize, unitSize);
+            else
+                for (int ii = 0; ii <= wallWidth / unitSize; ii++)
+                    e.Graphics.DrawImage(wallImage, (-unitSize / 2) + unitSize * ii, -unitSize / 2, unitSize, unitSize);
         }
 
 
@@ -205,7 +250,7 @@ namespace TankWars.Client.View
             e.Graphics.SmoothingMode = System.Drawing.Drawing2D.SmoothingMode.AntiAlias;
             using (SolidBrush redBrush = new System.Drawing.SolidBrush(Color.FromArgb(128, 255, 0, 0)))
             {
-                var beam = new Rectangle(0, 0, world.size*2, 4);
+                var beam = new Rectangle(0, 0, 4, -world.size * 2);
                 e.Graphics.FillEllipse(redBrush, beam);
             }
         }
@@ -213,78 +258,104 @@ namespace TankWars.Client.View
 
         private void DrawBackground(PaintEventArgs e)
         {
-            using (Image backgroundImg = Image.FromFile("img/Background.png"))
-            {
-                e.Graphics.DrawImage(backgroundImg, 0, 0, world.size, world.size);
-            }
+            e.Graphics.DrawImage(backgroundImage, 0, 0, world.size, world.size);
         }
         #endregion
 
         // This method is invoked when the DrawingPanel needs to be re-drawn
         protected override void OnPaint(PaintEventArgs e)
         {
-            lock (world)
-            {
-                double playerX = world.GetTank(world.Player.Id).Location.GetX();
-                double playerY = world.GetTank(world.Player.Id).Location.GetY();
-
-                // - calculate view/world size ratio
-                double ratio = (double)viewSize / (double)world.size;
-                int halfSizeScaled = (int)(world.size / 2.0 * ratio);
-
-                double inverseTranslateX = -WorldSpaceToImageSpace(world.size, playerX) + halfSizeScaled;
-                double inverseTranslateY = -WorldSpaceToImageSpace(world.size, playerY) + halfSizeScaled;
-
-                e.Graphics.TranslateTransform((float)inverseTranslateX, (float)inverseTranslateY);
-
-                // - Draw Background
-                DrawBackground(e);
-
-                // // - Draw the Player
-                // var player = world.GetTank(world.Player.Id);
-                // DrawObjectWithTransform(e, player, world.size, player.Location.GetX(), player.Location.GetY(), player.Direction.ToAngle(), PlayerDrawer);
-
-                // - Draw the walls
-                foreach (int wallId in world.GetWallIds())
+            if (world.HasPlayerTank())
+                lock (world)
                 {
-                    var wall = world.GetWall(wallId);
-                    DrawObjectWithTransform(e, wall, world.size, wall.P1.GetX(), wall.P1.GetY(), 0, WallDrawer);
-                }
+                    double playerX = world.GetTank(world.Player.Id).Location.GetX();
+                    double playerY = world.GetTank(world.Player.Id).Location.GetY();
 
-                // - Draw the tanks
-                foreach (int tankId in world.GetTankIds())
-                {
-                    // if (tankId == world.Player.Id)
-                    //     continue;
-                    var tank = world.GetTank(tankId);
-                    DrawObjectWithTransform(e, tank, world.size, tank.Location.GetX(), tank.Location.GetY(), tank.Direction.ToAngle(), TankDrawer);
-                    DrawObjectWithTransform(e, tank, world.size, tank.Location.GetX(), tank.Location.GetY(), 0, PlayerDrawer);
-                }
+                    // - calculate view/world size ratio
+                    double ratio = (double)viewSize / (double)world.size;
+                    int halfSizeScaled = (int)(world.size / 2.0 * ratio);
 
-                // - Draw the powerups
-                foreach (int powId in world.GetPowerupIds())
-                {
-                    var pow = world.GetPowerup(powId);
-                    DrawObjectWithTransform(e, pow, world.size, pow.Location.GetX(), pow.Location.GetY(), 0, PowerupDrawer);
-                }
+                    double inverseTranslateX = -WorldSpaceToImageSpace(world.size, playerX) + halfSizeScaled;
+                    double inverseTranslateY = -WorldSpaceToImageSpace(world.size, playerY) + halfSizeScaled;
 
-                // - Draw the projectiles
-                foreach (int projId in world.GetProjectileIds())
-                {
-                    var proj = world.GetProjectile(projId);
-                    DrawObjectWithTransform(e, proj, world.size, proj.Location.GetX(), proj.Location.GetY(), proj.Direction.ToAngle(), ProjectileDrawer);
-                }
+                    e.Graphics.TranslateTransform((float)inverseTranslateX, (float)inverseTranslateY);
 
-                // - Draw the projectiles
-                foreach (int beamId in world.GetBeamIds())
-                {
-                    var beam = world.GetBeam(beamId);
-                    DrawObjectWithTransform(e, beam, world.size, beam.Origin.GetX(), beam.Origin.GetY(), beam.Direction.ToAngle(), BeamDrawer);
+                    // - Draw Background
+                    DrawBackground(e);
+
+                    // // - Draw the Player
+                    // var player = world.GetTank(world.Player.Id);
+                    // DrawObjectWithTransform(e, player, world.size, player.Location.GetX(), player.Location.GetY(), player.Direction.ToAngle(), PlayerDrawer);
+
+                    // - Draw the walls
+                    foreach (int wallId in world.GetWallIds())
+                    {
+                        var wall = world.GetWall(wallId);
+                        DrawObjectWithTransform(e, wall, world.size,
+                                                ((wall.P1.GetX() <= wall.P2.GetX()) ? wall.P1.GetX() : wall.P2.GetX()),
+                                                ((wall.P1.GetY() <= wall.P2.GetY()) ? wall.P1.GetY() : wall.P2.GetY()),
+                                                0, WallDrawer);
+                    }
+
+                    // - Draw the tanks
+                    foreach (int tankId in world.GetTankIds())
+                    {
+                        var tank = world.GetTank(tankId);
+                        if (tank.Health == 0)
+                            continue;
+                        DrawObjectWithTransform(e, tank, world.size, tank.Location.GetX(), tank.Location.GetY(), tank.Direction.ToAngle(), TankDrawer);
+                        DrawObjectWithTransform(e, tank, world.size, tank.Location.GetX(), tank.Location.GetY(), tank.TurretDirection.ToAngle(), TurretDrawer);
+                        DrawObjectWithTransform(e, tank, world.size, tank.Location.GetX(), tank.Location.GetY(), 0, PlayerDrawer);
+                    }
+
+                    // - Draw the powerups
+                    foreach (int powId in world.GetPowerupIds())
+                    {
+                        var pow = world.GetPowerup(powId);
+                        DrawObjectWithTransform(e, pow, world.size, pow.Location.GetX(), pow.Location.GetY(), 0, PowerupDrawer);
+                    }
+
+                    // - Draw the projectiles
+                    foreach (int projId in world.GetProjectileIds())
+                    {
+                        var proj = world.GetProjectile(projId);
+                        DrawObjectWithTransform(e, proj, world.size, proj.Location.GetX(), proj.Location.GetY(), proj.Direction.ToAngle(), ProjectileDrawer);
+                    }
+
+                    // - Draw the projectiles
+                    foreach (int beamId in world.GetBeamIds())
+                    {
+                        var beam = world.GetBeam(beamId);
+                        DrawObjectWithTransform(e, beam, world.size, beam.Origin.GetX(), beam.Origin.GetY(), beam.Direction.ToAngle(), BeamDrawer);
+                    }
                 }
-            }
 
             // Do anything that Panel (from which we inherit) needs to do
             base.OnPaint(e);
+        }
+
+
+        private class ImageCollection
+        {
+            public Image Turret;
+            public Image Body;
+            public Image Projectile;
+
+            public ImageCollection(string color)
+            {
+                Turret = Image.FromFile($"{imgDir}/{color}Turret.png");
+                Body = Image.FromFile($"{imgDir}/{color}Tank.png");
+                Projectile = Image.FromFile($"{imgDir}/{color}Shot.png");
+            }
+
+            public void Dispose()
+            {
+                Turret.Dispose();
+                Body.Dispose();
+                Projectile.Dispose();
+            }
+
+
         }
     }
 }

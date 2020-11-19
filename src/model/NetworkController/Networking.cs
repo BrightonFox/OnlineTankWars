@@ -181,8 +181,8 @@ namespace TankWars.NetworkUtil
             {
                 state.ErrorOccured = true;
                 state.ErrorMessage = "ERROR: Connection Timed Out !! (3000ms)";
+                state.OnNetworkAction(state);
             }
-            state.OnNetworkAction(state);
         }
 
         /// <summary>
@@ -335,7 +335,7 @@ namespace TankWars.NetworkUtil
                 int lenS = socket.EndSend(ar);
                 if (lenS == 0)
                     return;
-                byte[] buffer = (byte[])Encoding.UTF8.GetBytes(data).Skip(lenS);
+                byte[] buffer = Encoding.UTF8.GetBytes(data).Skip(lenS).ToArray<byte>();
                 if (buffer.Length == 0)
                     return;
                 data = Encoding.UTF8.GetString(buffer);

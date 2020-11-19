@@ -15,9 +15,14 @@ using TankWars.Client.Model;
 namespace TankWars.Client.View
 {
     public partial class MainForm : Form
-    {
-        private const int viewSize = 500;
+    {   
+        public MethodInvoker DoOnConnectInvoker;
+        public MethodInvoker DoOnDisconnectInvoker;
+        public MethodInvoker DoOnFrameInvoker;
+        private const int viewSize = 900;
         private const int menuSize = 40;
+
+        private MathUtils.Vector2D mousePos;
 
         // The controller handles updates from the "server"
         // and notifies via an event
@@ -32,17 +37,23 @@ namespace TankWars.Client.View
             controller = ctrl;
             // world = controller.World;
             controller.UpdateArrived += OnFrame;
+            DoOnFrameInvoker = () => this.Invalidate(true);
             controller.ServerConnectionMade += OnConnect;
+            DoOnConnectInvoker = DoOnConnect;
+            controller.ServerDisconnected += OnDisconnect;
+            DoOnDisconnectInvoker = DoOnDisconnect;
             controller.OnNetworkConnectionError += DisplayErrorMsg;
             controller.OnNetworkError += DisplayErrorMsg;
 
             // - Set up the form. ------
             this.Text = "Tank Wars - Client (JustBroken)";
+            serverAddressText.Text = "localhost"; //"tankwars.eng.utah.edu";
             nameText.MaxLength = 16;
             
             connectButton.Click += OnBtnConnect;
             disconnectButton.Click += OnBtnDisconnect;
-            this.FormClosing += OnBtnDisconnect;
+            serverAddressText.KeyDown += OnAddressSubmitted;
+            this.FormClosing += OnMyFormClosing;
 
             // - Set the window size --
             this.ClientSize = new Size(viewSize, viewSize + menuSize);
@@ -50,6 +61,7 @@ namespace TankWars.Client.View
             // - Set up key and mouse handlers ----
             this.KeyDown += HandleKeyDown;
             this.KeyUp += HandleKeyUp;
+            
             
         }
 
@@ -74,6 +86,12 @@ namespace TankWars.Client.View
 
         private void OnConnect()
         {
+            this.Invoke(this.DoOnConnectInvoker);
+        }
+
+
+        private void DoOnConnect()
+        {
             // - Place and add the drawing panel
             drawingPanel = new DrawingPanel(controller.World, viewSize);
             drawingPanel.Location = new Point(0, menuSize);
@@ -82,21 +100,37 @@ namespace TankWars.Client.View
 
             drawingPanel.MouseDown += HandleMouseDown;
             drawingPanel.MouseUp += HandleMouseUp;
-            controller.GetTargetPos += drawingPanel.GetTargetPos;
+            drawingPanel.MouseMove += HandleMouseMove;
+            // controller.ServerDisconnected += drawingPanel.DisposeOfImages;
         }
 
 
         private void OnBtnDisconnect(object sender, EventArgs e)
+        {
+            controller.DisconnectFromServer();
+        }
+
+        private void OnDisconnect()
+        {
+            this.Invoke(this.DoOnDisconnectInvoker);
+        }
+
+        private void DoOnDisconnect()
         {
             // - Disable the form controls
             connectButton.Enabled = true;
             nameText.Enabled = true;
             serverAddressText.Enabled = true;
             disconnectButton.Enabled = false;
+            this.Controls.Remove(drawingPanel);
             // - Disable the global form to capture key presses
             this.KeyPreview = false;
-            // - Disconnect from the server
-            controller.DisconnectFromServer();
+        }
+
+        private void OnMyFormClosing(object sender, EventArgs e)
+        {
+            DoOnDisconnect();
+            drawingPanel.DisposeOfImages();
         }
 
 
@@ -107,8 +141,7 @@ namespace TankWars.Client.View
         {
             // Invalidate this form and all its children
             // This will cause the form to redraw as soon as it can
-            var invalidator = new MethodInvoker(() => this.Invalidate(true));
-            this.Invoke(invalidator);
+            this.Invoke(DoOnFrameInvoker);
         }
 
         /// <summary>
@@ -182,7 +215,7 @@ namespace TankWars.Client.View
                     controller.CancelMouseRequest("alt");
                     break;
                 case Keys.Escape:
-                    OnBtnDisconnect(this, new EventArgs());
+                    controller.DisconnectFromServer();
                     break;
             }
         }
@@ -221,6 +254,21 @@ namespace TankWars.Client.View
                     controller.CancelMouseRequest("alt");
                     break;
             }
+        }
+
+        private void HandleMouseMove(object sender, MouseEventArgs e)
+        {
+           controller.SetPlayerTurretDir(drawingPanel.GetTargetPos());
+        }
+
+
+        private void OnAddressSubmitted(object sender, KeyEventArgs e)
+        {
+            if (e.KeyCode == Keys.Enter)
+                OnBtnConnect(sender, e);
+            // Prevent other key handlers from running
+            e.SuppressKeyPress = true;
+            e.Handled = true;
         }
 
 

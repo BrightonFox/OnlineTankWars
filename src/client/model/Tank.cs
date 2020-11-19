@@ -26,9 +26,9 @@ namespace TankWars.Client.Model
 
         public Vector2D Location { get {return _location;} private set {return;}}
         
-        public Vector2D BarrelDirection { get {return _bodyDirection;} private set {return;}}
+        public Vector2D TurretDirection { get {return _turretDirection;} private set {return;}}
 
-        public Vector2D Direction { get {return _turretDirection;} private set {return;}}
+        public Vector2D Direction { get {return _bodyDirection;} private set {return;}}
 
         public int Score { get { return _score; } private set {return;} }
 
