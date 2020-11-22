@@ -97,44 +97,6 @@ _&lt;Brief description of project&gt;_
   - You can use the arrow keys or <kbd>WASD</kbd> to move the tank.
   - <kbd>esc</kbd> will disconnect from the server.
 
-### Schedule
--[X] Complete `README.md` documentation.
-
-#### Model
--[X] Make General json Models
--[X] Make client specific extension of json models
--[X] Finish commenting the code
-  -[X] Comment Method XML-Doc Headers.
-  -[X] Comment inside Methods where necessary for clarity.
-  -[X] Comment Public Property & Field XML-Doc Headers.
-  -[X] Comment Class and Constructor XML-Doc Headers.
-
-#### Controller
--[X] Set up Network Capabilities
-  -[X] Code Json receive
-  -[X] Code Json send
--[X] Create Events for the the View
--[X] Create Retrieve Methods for the View
--[X] Finish commenting the code
-  -[X] Comment Method XML-Doc Headers.
-  -[X] Comment inside Methods where necessary for clarity.
-  -[X] Comment Public Property, Field, & Event XML-Doc Headers.
-  -[X] Comment Class and Constructor XML-Doc Headers.
-
-#### View 
--[X] Import Drawing Panel from Lab 12
-  -[X] Create draw methods and add to `OnPaint` for all the objects
--[X] Design `MainForm`
-  -[X] Handle connection interface
--[X] Handle center on player tank
--[X] Create methods to register to appropriate controller events.
--[X] Add at least 1 new small feature
--[X] Finish commenting the code
-  -[X] Comment Method XML-Doc Headers.
-  -[X] Comment inside Methods where necessary for clarity.
-  -[X] Comment Public Property & Field XML-Doc Headers.
-  -[X] Comment Class and Constructor XML-Doc Headers.
-
 
 
 ## PS9: Tank Wars Server + Web Server
