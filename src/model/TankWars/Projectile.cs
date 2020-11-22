@@ -8,7 +8,10 @@
  *   Semester: Fall 2020
  * 
  * Version Data: 
- *   + ...
+ *   + v1.0 - Submittal - 2020/11/21
+ * 
+ * About:
+ *   A representation of a projectile for the TankWars Game.
  */
 
 using System;
@@ -18,6 +21,10 @@ using TankWars.MathUtils;
 
 namespace TankWars.JsonObjects
 {
+    /// <summary>
+    /// An object that represents a projectile that has been fired from a tank,
+    ///  in the TankWars game.
+    /// </summary>
     [JsonObject(MemberSerialization.OptIn)]
     public abstract class Projectile
     {
@@ -26,18 +33,37 @@ namespace TankWars.JsonObjects
             // TODO: figure out what goes here...
         }
 
+        /// <summary>
+        /// an int representing the projectile's unique ID
+        /// </summary>
         [JsonProperty(PropertyName = "proj")]
         protected int _id;
 
+        /// <summary>
+        /// a Vector2D representing the projectile's location.
+        /// </summary>
         [JsonProperty(PropertyName = "loc")]
         protected Vector2D _location;
 
+        /// <summary>
+        /// a Vector2D representing the projectile's orientation.
+        /// </summary>
         [JsonProperty(PropertyName = "dir")]
         protected Vector2D _direction;
 
+        /// <summary>
+        /// A bool representing if the projectile died on this frame
+        /// (hit something or left the bounds of the world). The
+        /// server will send the dead projectiles only once.
+        /// </summary>
         [JsonProperty(PropertyName = "died")]
         protected bool _isDead;
 
+        /// <summary>
+        /// An int representing the ID of the tank that created the
+        /// projectile. You can use this to draw the projectiles
+        /// with a different color or image for each player.
+        /// </summary>
         [JsonProperty(PropertyName = "owner")]
         protected int _ownerId;
     }

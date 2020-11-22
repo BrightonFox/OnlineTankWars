@@ -1,4 +1,20 @@
-﻿using System;
+﻿/**
+ * Team: JustBroken
+ * Authors: 
+ *   + Andrew Osterhout (u1317172)
+ *   + Brighton Fox (u0981544)
+ * Organization: University of Utah
+ *   Course: CS3500: Software Practice
+ *   Semester: Fall 2020
+ * 
+ * Version Data: 
+ *   + v1.0 - Submittal - 2020/11/21
+ * 
+ * About:
+ *   The primary GUI code for the tank wars game.
+ */
+
+using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Data;
@@ -12,30 +28,39 @@ using System.Windows.Forms;
 using TankWars.Client.Control;
 using TankWars.Client.Model;
 
+
 namespace TankWars.Client.View
 {
+
+    /// <summary>
+    /// The primary Gui Design for the Tank Wars Client
+    ///  (Uses MVC design principals).
+    /// </summary>
     public partial class MainForm : Form
-    {   
-        public MethodInvoker DoOnConnectInvoker;
-        public MethodInvoker DoOnDisconnectInvoker;
-        public MethodInvoker DoOnFrameInvoker;
+    {
+        // The Mothod invokers used to with the Invoke call to launch tasks on the main GUI thread.
+        private MethodInvoker DoOnConnectInvoker;
+        private MethodInvoker DoOnDisconnectInvoker;
+        private MethodInvoker DoOnFrameInvoker;
+
+        // Parameters defining the size of the interface.
         private const int viewSize = 900;
         private const int menuSize = 40;
 
-        private MathUtils.Vector2D mousePos;
 
-        // The controller handles updates from the "server"
+        // The controller handles updates from the server
         // and notifies via an event
         private Controller controller;
 
-        // World is a container for the game objects
-        private World world;
-
+        /// <summary>
+        /// The primary Gui Design for the TaNk Wars Client
+        ///  (Uses MVC design principals).
+        /// </summary>
+        /// <param name="ctrl">The controller for the Tank Wars game</param>
         public MainForm(Controller ctrl)
         {
             InitializeComponent();
             controller = ctrl;
-            // world = controller.World;
             controller.UpdateArrived += OnFrame;
             DoOnFrameInvoker = () => this.Invalidate(true);
             controller.ServerConnectionMade += OnConnect;
@@ -49,29 +74,64 @@ namespace TankWars.Client.View
             this.Text = "Tank Wars - Client (JustBroken)";
             serverAddressText.Text = "localhost"; //"tankwars.eng.utah.edu";
             nameText.MaxLength = 16;
-            
+
+            // - Assign listeners for all form items interactions
+            controlsButton.Click += OnControlsBtn;
+            aboutButton.Click += OnAboutBtn;
             connectButton.Click += OnBtnConnect;
             disconnectButton.Click += OnBtnDisconnect;
             serverAddressText.KeyDown += OnAddressSubmitted;
             this.FormClosing += OnMyFormClosing;
 
-            // - Set the window size --
-            this.ClientSize = new Size(viewSize, viewSize + menuSize);
-
             // - Set up key and mouse handlers ----
             this.KeyDown += HandleKeyDown;
             this.KeyUp += HandleKeyUp;
-            
-            
+
+
         }
 
 
         /// <summary>
-        /// Simulates connecting to a "server"
+        /// Validates the player name and server address and begins the connection process to the server given
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
         private void OnBtnConnect(object sender, EventArgs e)
+        {
+            // - Check and deal with playername and host ----
+            var playerName = nameText.Text.Trim();
+            var serverAddress = serverAddressText.Text.Trim();
+            if (playerName == "" || playerName.Length < 3)
+            {
+                DisplayErrorMsg("Name must be between 3 & 16 characters!");
+                return;
+            }
+            if (serverAddress == "")
+            {
+                DisplayErrorMsg("Please enter a server name!");
+                return;
+            }
+
+            // - Connect to the server
+            controller.ConnectToServer(serverAddress, playerName);
+        }
+
+
+        /// <summary>
+        /// Private helper used to invoke DoOnConnect method on main thread
+        /// </summary>
+        private void OnConnect()
+        {
+            this.Invoke(this.DoOnConnectInvoker);
+        }
+
+        /// <summary>
+        /// Sets initial values and properties for Form items.
+        /// Creates a new Drawing Panel.
+        /// Configures the drawing panel.
+        /// Attaches the mouse handeling methods to the drawing panel.
+        /// </summary>
+        private void DoOnConnect()
         {
             // - Disable the form controls
             connectButton.Enabled = false;
@@ -80,41 +140,41 @@ namespace TankWars.Client.View
             disconnectButton.Enabled = true;
             // - Enable the global form to capture key presses
             this.KeyPreview = true;
-            // - "connect" to the "server"
-            controller.ConnectToServer(serverAddressText.Text, nameText.Text);
-        }
-
-        private void OnConnect()
-        {
-            this.Invoke(this.DoOnConnectInvoker);
-        }
-
-
-        private void DoOnConnect()
-        {
             // - Place and add the drawing panel
             drawingPanel = new DrawingPanel(controller.World, viewSize);
             drawingPanel.Location = new Point(0, menuSize);
             drawingPanel.Size = new Size(viewSize, viewSize);
             this.Controls.Add(drawingPanel);
 
+            // - Assign listeners for input events
             drawingPanel.MouseDown += HandleMouseDown;
             drawingPanel.MouseUp += HandleMouseUp;
             drawingPanel.MouseMove += HandleMouseMove;
             // controller.ServerDisconnected += drawingPanel.DisposeOfImages;
         }
 
-
+        /// <summary>
+        /// Properly ends the connection to the connected server
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
         private void OnBtnDisconnect(object sender, EventArgs e)
         {
             controller.DisconnectFromServer();
         }
 
+        /// <summary>
+        /// Private helper used to invoke DoOnDisconnect method on main thread
+        /// </summary>
         private void OnDisconnect()
         {
             this.Invoke(this.DoOnDisconnectInvoker);
         }
 
+        /// <summary>
+        /// Resets values of Form items to allow user to create a new connection.
+        ///  Also removed the drawing panel from the view.
+        /// </summary>
         private void DoOnDisconnect()
         {
             // - Disable the form controls
@@ -127,10 +187,15 @@ namespace TankWars.Client.View
             this.KeyPreview = false;
         }
 
+        /// <summary>
+        /// Private helper to insure that the form closing is handled cleanly and used graphics are disposed
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
         private void OnMyFormClosing(object sender, EventArgs e)
         {
             DoOnDisconnect();
-            drawingPanel.DisposeOfImages();
+            drawingPanel?.DisposeOfImages();
         }
 
 
@@ -172,7 +237,7 @@ namespace TankWars.Client.View
                 case Keys.Space:
                     controller.HandleMouseRequest("main");
                     break;
-                case Keys.Enter:
+                case Keys.E:
                     controller.HandleMouseRequest("alt");
                     break;
             }
@@ -211,7 +276,7 @@ namespace TankWars.Client.View
                 case Keys.Space:
                     controller.CancelMouseRequest("main");
                     break;
-                case Keys.Enter:
+                case Keys.E:
                     controller.CancelMouseRequest("alt");
                     break;
                 case Keys.Escape:
@@ -256,12 +321,26 @@ namespace TankWars.Client.View
             }
         }
 
+        /// <summary>
+        /// Handle mouse movement.
+        /// Get the mouse position in terms of the drawing panel, offset to coordinates relative to player tank.
+        /// Set the player turret position with a controller method.
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
         private void HandleMouseMove(object sender, MouseEventArgs e)
         {
-           controller.SetPlayerTurretDir(drawingPanel.GetTargetPos());
+            var mousePos = drawingPanel.PointToClient(MousePosition);
+            controller.SetPlayerTurretDir(new MathUtils.Vector2D(mousePos.X - (viewSize / 2),
+                                                                  mousePos.Y - (viewSize / 2)));
         }
 
-
+        /// <summary>
+        /// Called to initiate connection to provided server when "Enter" key is pressed
+        ///  (only when in the server address text box).
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
         private void OnAddressSubmitted(object sender, KeyEventArgs e)
         {
             if (e.KeyCode == Keys.Enter)
@@ -271,10 +350,59 @@ namespace TankWars.Client.View
             e.Handled = true;
         }
 
-
+        /// <summary>
+        /// Creates and displays an error message box with the given <paramref name="msg"/> as its contents.
+        ///  (attached to the various Error events in of the controller)
+        /// </summary>
+        /// <param name="msg"></param>
         private void DisplayErrorMsg(string msg)
         {
             MessageBox.Show(msg, "ERROR!!", MessageBoxButtons.OK, MessageBoxIcon.Error);
+        }
+
+        /// <summary>
+        /// Creates and displays a message box displaying the program's credit information
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private void OnAboutBtn(object sender, EventArgs e)
+        {
+            MessageBox.Show(
+                "Solution By:\n" +
+                "  Team: JustBroken\n" +
+                "    Members:\n" +
+                "      Brighton Fox (u0981544)\n" +
+                "      Andrew Osterhout (u1317172)\n" +
+                "\n" +
+                "Artwork By:\n" +
+                "  Jolie Uk & Alex Smith\n" +
+                "\n" +
+                "Game Design By:\n" +
+                "  Daniel Kopta\n" +
+                "\n" +
+                "Designed For:\n" +
+                "  CS3500 Fall 2020, University of Utah.",
+                "About: TankWars", MessageBoxButtons.OK, MessageBoxIcon.Information);
+        }
+
+        /// <summary>
+        /// Creates and displays a message box showing the uses of the different control inputs (key and mouse bindings)
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private void OnControlsBtn(object sender, EventArgs e)
+        {
+            MessageBox.Show(
+                "W: \t \t Move up\n" +
+                "A: \t \t Move left\n" +
+                "S: \t \t Move down\n" +
+                "D: \t \t Move right\n" +
+                "E: \t \t Fire beam\n" +
+                "Space bar: \t Fire projectile\n" +
+                "Mouse Move: \t Aim\n" +
+                "Left click: \t Fire projectile\n" +
+                "Right click: \t Fire beam",
+                "TankWars Controls", MessageBoxButtons.OK, MessageBoxIcon.Information);
         }
 
     }

@@ -8,20 +8,19 @@
  *   Semester: Fall 2020
  * 
  * Version Data: 
- *   + ...
+ *   + v1.0 - submittal - 2020/11/21
+ *   
+ * About:
+ *   The controller for the TankWars game,
+ *   It handles network communications with the server.
  */
 
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using System.Timers;
 using System.Text.RegularExpressions;
-using System.Windows.Input;
 
 using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
 
 using TankWars.Client.Model;
 using TankWars.NetworkUtil;
@@ -30,11 +29,29 @@ using TankWars.MathUtils;
 namespace TankWars.Client.Control
 {
 
+    /// <summary>
+    /// The delegate used for Network error events registered in the TankWars Controller
+    /// </summary>
+    /// <param name="msg">a string containing information about the error that occured</param>
     public delegate void NetworkErrorOccuredHandler(string msg);
+
+    /// <summary>
+    /// The delegate used for events registered in the TankWars Controller, 
+    ///  that are triggered when various events having to do with the server occur.
+    /// </summary>
     public delegate void ServerUpdateHandler();
 
+
+    /// <summary>
+    /// The Controller for the client version of the TankWars game 
+    ///  (part of the MVC design scheme).
+    /// </summary>
     public class Controller
     {
+        /// <summary>
+        /// A regular expression for segmenting the network messages,
+        ///  which under teh Tank wars protocol are denoted with a `\n` character.
+        /// </summary>
         private static readonly Regex MsgSplitPattern = new Regex(@"(?<=[\n])");
 
         private SocketState State;
@@ -44,36 +61,82 @@ namespace TankWars.Client.Control
         private string fireType = "none";
         private Vector2D targetDir;
 
-
+        /// <summary>
+        /// Event triggered when network errors that DO NOT require you
+        ///  to disconnect from the server / reconnect to the server to recover.
+        /// <para>
+        /// Responsible for communication with the TankWars Game server,
+        ///  and for maintaining small amounts of client side logic for the game,
+        ///  like managing how long beams should be displayed for, etc</para>
+        /// </summary>
         public event NetworkErrorOccuredHandler OnNetworkError;
+
+        /// <summary>
+        /// Event triggered when network errors that DO require you
+        ///  to disconnect from the server / reconnect to the server in order to recover.
+        /// </summary>
         public event NetworkErrorOccuredHandler OnNetworkConnectionError;
+
+        /// <summary>
+        /// Event triggered after the client has received enough information from the server 
+        ///  to constitute a frame.
+        /// <para>!! The view should register any methods that need to be done once per frame to this event !!</para>
+        /// Will not be triggered until after <see cref="ServerConnectionMade"/> is triggered.
+        /// </summary>
         public event ServerUpdateHandler UpdateArrived;
+
+        /// <summary>
+        /// Event triggered after the client has successfully connected with the server,
+        ///  and initial handshake info has been exchanged
+        ///  (i.e. sent player name, and received player id, & world size).
+        /// </summary>
         public event ServerUpdateHandler ServerConnectionMade;
+
+        /// <summary>
+        /// Event triggered after teh controller has started to send a final message to the server.
+        /// After this no more messages will be received from the server,
+        ///  and <see cref="UpdateArrived"/> will not be triggered again until,
+        ///  <see cref="ServerConnectionMade"/> is triggered again.
+        /// </summary>
         public event ServerUpdateHandler ServerDisconnected;
 
 
-        public Player Player { get; private set; }   //! If there is a compile error this might be it!
-        public World World { get; private set; }     //! If there is a compile error this might be it!
+        /// <summary>
+        /// Information representing the player.
+        /// </summary>
+        /// <value></value>
+        public Player Player { get; private set; }
+
+        /// <summary>
+        /// The object that represents the world.
+        /// </summary>
+        public World World { get; private set; }
 
 
+
+        /// <summary>
+        /// The Controller for the client version of the TankWars game 
+        ///  (part of the MVC design scheme).
+        /// <para>
+        /// Responsible for communication with the TankWars Game server,
+        ///  and for maintaining small amounts of client side logic for the game,
+        ///  like managing how long beams should be displayed for, etc</para>
+        /// </summary>
         public Controller()
         {
             this.UpdateArrived += this.ProcessInputs;
             this.UpdateArrived += this.GameLoop;
-            //TODO: whatever else needs to be done here...
         }
 
 
         #region GameLoop
         /// <summary>
-        /// Logic that needs to be done every frame agnostic of the view.
+        /// Logic that needs to be done every frame agnostic of the view inputs.
         /// </summary>
         private void GameLoop()
         {
-            // Handle the life span of a beam ----
+            // Handle the life span of a beam
             World.ManageBeamLifeTimes(30);
-
-            //TODO: handle the rest of the logic that should be void of the view...
         }
 
         #endregion
@@ -82,9 +145,6 @@ namespace TankWars.Client.Control
         #region NetworkConnect
         /// <summary>
         /// Connects to server.
-        /// <para>
-        /// !! IT IS RECOMMENDED TO RUN THIS IN A SEPARATE THREAD FROM THE VIEWS MAIN THREAD !!
-        /// </para>
         /// </summary>
         /// <param name="addr">An ipv4 address or domain name for the server</param>
         /// <param name="name">The name of the player, max 16 characters</param>
@@ -115,12 +175,14 @@ namespace TankWars.Client.Control
         }
 
         /// <summary>
-        /// Retrieves player ID and world size from server initial messages
-        /// !! If we never draw anyting this is prob.s the culprit !!
+        /// Retrieves player ID and world size from server initial messages,
+        ///   will not be called after initial messages are received.
+        /// <para>see <see cref="OnMsgReceive"/> for regular server communication processing.</para>
         /// </summary>
         /// <param name="state"></param>
         private void OnInitMsgReceive(SocketState state)
         {
+            // - throw an error if the connection could not be setup
             if (state.ErrorOccured)
                 OnNetworkConnectionError(state.ErrorMessage);
 
@@ -129,11 +191,12 @@ namespace TankWars.Client.Control
             int ii;
             try
             {
+                // - loop to differentiate the text received from the server
                 for (ii = 0; ii < items.Length - 1; ii++)
                 {
                     if (items[ii].Length == 0) // is it empty?
                         continue;
-                    else if (items[ii].Contains("{"))   // is it a json object that is not a wall?
+                    else if (items[ii].Contains("{"))   // is it a json object?
                     {
                         state.OnNetworkAction = OnMsgReceive;
                         ParseJsonMsgs((new ArraySegment<string>(items, ii, items.Length - ii)).ToArray<string>(), state);
@@ -151,22 +214,22 @@ namespace TankWars.Client.Control
                 }
 
                 // check last item to see if it is complete ----
-                if (items[ii].Length > 0 && items[++ii][items[ii].Length - 1] == '\n')  // is it a wall?
+                if (items[ii].Length > 0 && items[++ii][items[ii].Length - 1] == '\n')
                 {
-                    if (items[ii].Contains("{"))   // is it a json object that is not a wall?
+                    if (items[ii].Contains("{"))   // is it a json object?
                     {
                         World.ParseJsonString(items[ii]);
                     }
                     else if (!Player.IdSet)        // if not a json do we have the player id yet? (is it the player id?)
-                        Player.Id = Int32.Parse(items[ii]/*.Substring(0, items[ii].Length - 2)*/);
+                        Player.Id = Int32.Parse(items[ii]);
                     else if (World == null)        // we have player id it must be the world size !
-                        World = new World(Int32.Parse(items[ii]/*.Substring(0, items[ii].Length - 2)*/), Player);
+                        World = new World(Int32.Parse(items[ii]), Player);
 
                     // Clear out the appropriate section of the data section
                     state.RemoveData(0, items[ii].Length);
                 }
                 // check to see of we have received all walls and therefore finished init process
-                if (World != null /*&& World.HasPlayerTank()*/)
+                if (World != null)
                 {
                     state.OnNetworkAction = OnMsgReceive;
                     ServerConnectionMade();
@@ -189,6 +252,7 @@ namespace TankWars.Client.Control
         /// <summary>
         /// Retrieves messages from server representing state of all game objects,
         ///   to update client model world.
+        /// <para>see <see cref="OnInitMsgReceive"/> for the handling of the initial messages from the server.</para>
         /// </summary>
         /// <param name="state"></param>
         private void OnMsgReceive(SocketState state)
@@ -213,7 +277,8 @@ namespace TankWars.Client.Control
 
 
         /// <summary>
-        /// Handles each json object contained in the passed <paramref name="msgs"/> string array.
+        /// Handles each json object contained in the passed <paramref name="msgs"/> string array and
+        ///  removes them from the passed <paramref name="state"/> buffer.
         /// </summary>
         /// <param name="msgs"></param>
         /// <param name="state"></param>
@@ -247,8 +312,8 @@ namespace TankWars.Client.Control
 
         #region NetworkingSend
         /// <summary>
-        /// Checks which inputs are currently requested.
-        /// Sends it as a command to the server.
+        /// Checks which inputs are currently requested and
+        ///  sends any as a command to the server.
         /// </summary>
         private void ProcessInputs()
         {
@@ -268,8 +333,7 @@ namespace TankWars.Client.Control
         }
 
         /// <summary>
-        /// Checks which inputs are currently requested.
-        /// Sends it as a command to the server.
+        /// Sends a final command to the server to safely close the connection.
         /// </summary>
         public void DisconnectFromServer()
         {
@@ -280,9 +344,15 @@ namespace TankWars.Client.Control
             }
             State.OnNetworkAction = (s) => { return; };
             Networking.SendAndClose(State.TheSocket, JsonConvert.SerializeObject(command) + '\n');
+
+            // - do the things you need to after you disconnect from server
+            //? i.e. make sure you're ready to connect to a server again without restarting the application.
             ServerDisconnected();
-            // Player = null;
             World = null;
+            movingPressed = false;
+            mousePressed = false;
+            moveDir = "none";
+            fireType = "none";
         }
         #endregion
 
@@ -344,6 +414,10 @@ namespace TankWars.Client.Control
             }
         }
 
+        /// <summary>
+        /// Updates the controller to show that the mouse has been moved
+        /// </summary>
+        /// <param name="targetPos">The coordinates of the desired target for the turret</param>
         public void SetPlayerTurretDir(Vector2D targetPos)
         {
             targetPos.Normalize();

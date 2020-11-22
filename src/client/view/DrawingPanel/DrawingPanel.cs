@@ -1,4 +1,21 @@
-﻿using System;
+﻿/**
+ * Team: JustBroken
+ * Authors: 
+ *   + Andrew Osterhout (u1317172)
+ *   + Brighton Fox (u0981544)
+ * Organization: University of Utah
+ *   Course: CS3500: Software Practice
+ *   Semester: Fall 2020
+ * 
+ * Version Data: 
+ *   + v1.0 - Submittal - 2020/11/21
+ * 
+ * About:
+ *   A modification of the winforms panel that draws the gameview 
+ *    for the TankWars game.
+ */
+
+using System;
 using System.Collections.Generic;
 using System.Drawing;
 using System.Linq;
@@ -8,8 +25,13 @@ using System.Windows.Forms;
 
 using TankWars.Client.Model;
 
+
 namespace TankWars.Client.View
 {
+
+    /// <summary>
+    /// A winform panel that draws the game view for the TankWars game.
+    /// </summary>
     public class DrawingPanel : Panel
     {
         public delegate void ObjectDrawer(object o, PaintEventArgs e);
@@ -19,6 +41,7 @@ namespace TankWars.Client.View
         private static string imgDir = "../../../../../../res/img";
 
         #region Images
+        // - All disposable graphic objects to be used in drawing the game world
         private ImageCollection BlueImages = new ImageCollection("Blue");
         private ImageCollection DarkImages = new ImageCollection("Dark");
         private ImageCollection GreenImages = new ImageCollection("Green");
@@ -28,12 +51,26 @@ namespace TankWars.Client.View
         private ImageCollection RedImages = new ImageCollection("Red");
         private ImageCollection YellowImages = new ImageCollection("Yellow");
 
-        private Image wallImage = Image.FromFile($"{imgDir}/WallSprite.png");
-        private Image backgroundImage = Image.FromFile($"{imgDir}/Background.png");
+        private Image WallImage = Image.FromFile($"{imgDir}/WallSprite.png");
+        private Image ArenaBackgroundImage = Image.FromFile($"{imgDir}/Background.png");
+        private Image HeartImage = Image.FromFile($"{imgDir}/heart.png");
+        private Image EmptyHeartImage = Image.FromFile($"{imgDir}/heartEmpty.png");
 
+        private SolidBrush TransBlackBrush = new SolidBrush(Color.FromArgb(128, 0, 0, 0));
+        private SolidBrush WhiteBrush = new SolidBrush(Color.White);
+        private SolidBrush LGreenBrush = new SolidBrush(Color.LightGreen);
+        private SolidBrush TransRedBrush = new System.Drawing.SolidBrush(Color.FromArgb(128, 255, 0, 0));
+        private SolidBrush RedBrush = new SolidBrush(Color.Red);
+
+        private Font GameFont = new Font("Consolas", 12);
         #endregion
+        
 
-
+        /// <summary>
+        /// A winform panel that draws the game view for the TankWars game.
+        /// </summary>
+        /// <param name="w">The world to be represented and used in the form</param>
+        /// <param name="viewSize">The size of the drawing panel to be rendered</param>
         public DrawingPanel(World w, int viewSize)
         {
             DoubleBuffered = true;
@@ -42,17 +79,14 @@ namespace TankWars.Client.View
             this.BackColor = Color.FromArgb(200, 16, 32, 32);
         }
 
+        /// <summary>
+        /// Assures that all graphic objects are disposed when this is no longer used
+        /// </summary>
         ~DrawingPanel()
         {
             DisposeOfImages();
         }
 
-        public MathUtils.Vector2D GetTargetPos()
-        {
-            var mousePos = this.PointToClient(MousePosition);
-            return new MathUtils.Vector2D(mousePos.X - (viewSize / 2),
-                                                mousePos.Y - (viewSize / 2));
-        }
 
         /// <summary>
         /// Helper method for DrawObjectWithTransform
@@ -65,6 +99,13 @@ namespace TankWars.Client.View
             return (int)w + size / 2;
         }
 
+
+        /// <summary>
+        /// Takes in the Id of a tank object and returns an image collection
+        ///  with the requisite images of a color based upon the id.
+        /// </summary>
+        /// <param name="id"></param>
+        /// <returns></returns>
         private ImageCollection GetColorFromId(int id)
         {
             switch (id % 8)
@@ -89,6 +130,10 @@ namespace TankWars.Client.View
             }
         }
 
+        /// <summary>
+        /// Will dispose of all of the disposable graphics items the
+        /// drawing panel uses.
+        /// </summary>
         public void DisposeOfImages()
         {
             BlueImages.Dispose();
@@ -99,13 +144,24 @@ namespace TankWars.Client.View
             PurpleImages.Dispose();
             RedImages.Dispose();
             YellowImages.Dispose();
-            wallImage.Dispose();
-            backgroundImage.Dispose();
+
+            WallImage.Dispose();
+            ArenaBackgroundImage.Dispose();
+            HeartImage.Dispose();
+            EmptyHeartImage.Dispose();
+
+            TransBlackBrush.Dispose();
+            WhiteBrush.Dispose();
+            LGreenBrush.Dispose();
+            TransRedBrush.Dispose();
+            RedBrush.Dispose();
+
+            GameFont.Dispose();
         }
 
 
         /// <summary>
-        /// This method performs a translation and rotation to drawn an object in the world.
+        /// This method performs a translation and rotation to draw an object in the world.
         /// </summary>
         /// <param name="e">PaintEventArgs to access the graphics (for drawing)</param>
         /// <param name="o">The object to draw</param>
@@ -131,9 +187,11 @@ namespace TankWars.Client.View
 
         #region Object Drawers
         /// <summary>
+        /// Draws the player information like name, health, and score around the tanks.
+        /// <para>
         /// Acts as a drawing delegate for DrawObjectWithTransform
         /// After performing the necessary transformation (translate/rotate)
-        /// DrawObjectWithTransform will invoke this method
+        /// DrawObjectWithTransform will invoke this method. </para>
         /// </summary>
         /// <param name="o">The object to draw</param>
         /// <param name="e">The PaintEventArgs to access the graphics</param>
@@ -141,32 +199,28 @@ namespace TankWars.Client.View
         {
             Tank p = o as Tank;
 
-            int maxHealthWidth = 60;
-            int healthWidth = 60;
-            if (p.Health == 2)
-                healthWidth = 40;
-            else if (p.Health == 1)
-                healthWidth = 20;
-            else if (p.Health == 0)
-                healthWidth = 1;
-
             e.Graphics.SmoothingMode = System.Drawing.Drawing2D.SmoothingMode.AntiAlias;
-            using (SolidBrush greenBrush = new SolidBrush(Color.LightGreen))
-            using (SolidBrush whiteBrush = new SolidBrush(Color.White))
-            using (SolidBrush transBlackBrush = new SolidBrush(Color.FromArgb(128, 0, 0, 0)))
-            {
-                var healthBkgd = new Rectangle(-30, -40, maxHealthWidth, 4);
-                e.Graphics.FillRectangle(transBlackBrush, healthBkgd);
 
-                var health = new Rectangle(-30, -40, healthWidth, 4);
-                e.Graphics.FillRectangle(greenBrush, health);
+            for (int i = 1; i <= 3; i++)
+                e.Graphics.DrawImage(
+                    (i <= p.Health) ? HeartImage : EmptyHeartImage,
+                    -30 + (20 * (i - 1)), -48, 20, 20);
 
-                e.Graphics.DrawString(p.PlayerName + ": " + p.Score.ToString(), new Font("Consolas", 12), whiteBrush, -40, 32);
+            var playerInfo = p.PlayerName + ": " + p.Score.ToString();
+            e.Graphics.DrawString(playerInfo, GameFont, WhiteBrush,
+                                    -e.Graphics.MeasureString(playerInfo, GameFont).Width / 2, 32);
 
-                // e.Graphics.DrawString(p.Score.ToString(), new Font("Consolas", 6), blackBrush, -28, 34);
-            }
         }
 
+        /// <summary>
+        /// Draws the tank objects main body with color based on its Id.
+        /// <para>
+        /// Acts as a drawing delegate for DrawObjectWithTransform
+        /// After performing the necessary transformation (translate/rotate)
+        /// DrawObjectWithTransform will invoke this method. </para>
+        /// </summary>
+        /// <param name="o">The object to draw</param>
+        /// <param name="e">The PaintEventArgs to access the graphics</param>
         private void TankDrawer(object o, PaintEventArgs e)
         {
             Tank t = o as Tank;
@@ -174,6 +228,15 @@ namespace TankWars.Client.View
             e.Graphics.DrawImage(GetColorFromId(t.Id).Body, -32, -32, 64, 64);
         }
 
+        /// <summary>
+        /// Draws the tank objects rotatable turret with color based on its Id.
+        /// <para>
+        /// Acts as a drawing delegate for DrawObjectWithTransform
+        /// After performing the necessary transformation (translate/rotate)
+        /// DrawObjectWithTransform will invoke this method. </para>
+        /// </summary>
+        /// <param name="o">The object to draw</param>
+        /// <param name="e">The PaintEventArgs to access the graphics</param>
         private void TurretDrawer(object o, PaintEventArgs e)
         {
             Tank t = o as Tank;
@@ -183,9 +246,11 @@ namespace TankWars.Client.View
         }
 
         /// <summary>
+        /// Draws the powerup object.
+        /// <para>
         /// Acts as a drawing delegate for DrawObjectWithTransform
         /// After performing the necessary transformation (translate/rotate)
-        /// DrawObjectWithTransform will invoke this method
+        /// DrawObjectWithTransform will invoke this method. </para>
         /// </summary>
         /// <param name="o">The object to draw</param>
         /// <param name="e">The PaintEventArgs to access the graphics</param>
@@ -193,25 +258,27 @@ namespace TankWars.Client.View
         {
             Powerup p = o as Powerup;
 
-            int width = 8;
-            int height = 8;
+            int width = 12;
+            int height = 12;
             e.Graphics.SmoothingMode = System.Drawing.Drawing2D.SmoothingMode.AntiAlias;
-            using (SolidBrush redBrush = new SolidBrush(Color.Red))
-            using (SolidBrush whiteBrush = new SolidBrush(Color.White))
-            {
-                // Circles are drawn starting from the top-left corner.
-                // So if we want the circle centered on the powerups location, we have to offset it
-                // by half its size to the left (-width/2) and up (-height/2)
-                Rectangle r = new Rectangle(-(width / 2), -(height / 2), width, height);
-                Rectangle r2 = new Rectangle(-(width / 4), -(height / 4), width / 2, height / 2);
 
-                e.Graphics.FillEllipse(redBrush, r);
-                e.Graphics.FillEllipse(whiteBrush, r2);
-            }
+            Rectangle r = new Rectangle(-(width / 2), -(height / 2), width, height);
+            Rectangle r2 = new Rectangle(-(width / 4), -(height / 4), width / 2, height / 2);
+
+            e.Graphics.FillEllipse(RedBrush, r);
+            e.Graphics.FillEllipse(WhiteBrush, r2);
         }
 
 
-
+        /// <summary>
+        /// Draws the projectile objects with color based on the tank that fired them.
+        /// <para>
+        /// Acts as a drawing delegate for DrawObjectWithTransform
+        /// After performing the necessary transformation (translate/rotate)
+        /// DrawObjectWithTransform will invoke this method. </para>
+        /// </summary>
+        /// <param name="o">The object to draw</param>
+        /// <param name="e">The PaintEventArgs to access the graphics</param>
         private void ProjectileDrawer(object o, PaintEventArgs e)
         {
             Projectile p = o as Projectile;
@@ -220,6 +287,16 @@ namespace TankWars.Client.View
         }
 
 
+        /// <summary>
+        /// Draws the walls as a line of wall objects that is either horizontal or vertical
+        ///  (the dif in X/Y in P1 & P2 should be 0 if it is vertical/horizontal, and the other diff should be divisible by 50 (respectively)).
+        /// <para>
+        /// Acts as a drawing delegate for DrawObjectWithTransform
+        /// After performing the necessary transformation (translate/rotate)
+        /// DrawObjectWithTransform will invoke this method. </para>
+        /// </summary>
+        /// <param name="o">The object to draw</param>
+        /// <param name="e">The PaintEventArgs to access the graphics</param>
         private void WallDrawer(object o, PaintEventArgs e)
         {
             Wall w = o as Wall;
@@ -228,41 +305,51 @@ namespace TankWars.Client.View
             int wallHeight = (int)Math.Abs(w.P1.GetY() - w.P2.GetY());
             int unitSize = 50;
 
-            if (wallWidth == 0)
-                wallWidth = unitSize;
-            if (wallHeight == 0)
-                wallHeight = unitSize;
-
+            // determines if the passed wall is vertical or horizontal and tiles the graphic accordingly
             e.Graphics.SmoothingMode = System.Drawing.Drawing2D.SmoothingMode.AntiAlias;
-            if (wallWidth / unitSize == 1)
+            if (wallWidth == 0)
                 for (int jj = 0; jj <= wallHeight / unitSize; jj++)
-                    e.Graphics.DrawImage(wallImage, -unitSize / 2, (-unitSize / 2) + (unitSize * jj), unitSize, unitSize);
+                    e.Graphics.DrawImage(WallImage, -unitSize / 2, (-unitSize / 2) + (unitSize * jj), unitSize, unitSize);
             else
                 for (int ii = 0; ii <= wallWidth / unitSize; ii++)
-                    e.Graphics.DrawImage(wallImage, (-unitSize / 2) + unitSize * ii, -unitSize / 2, unitSize, unitSize);
+                    e.Graphics.DrawImage(WallImage, (-unitSize / 2) + unitSize * ii, -unitSize / 2, unitSize, unitSize);
         }
 
-
+        /// <summary>
+        /// Draws Beam object from where it was fired in the direction it was fired and for 2x the world size
+        ///  (to make sure that it doesn't stop being drawn stop before its area of effect is over ).
+        /// <para>
+        /// Acts as a drawing delegate for DrawObjectWithTransform
+        /// After performing the necessary transformation (translate/rotate)
+        /// DrawObjectWithTransform will invoke this method. </para>
+        /// </summary>
+        /// <param name="o">The object to draw</param>
+        /// <param name="e">The PaintEventArgs to access the graphics</param>
         private void BeamDrawer(object o, PaintEventArgs e)
         {
             Beam b = o as Beam;
 
             e.Graphics.SmoothingMode = System.Drawing.Drawing2D.SmoothingMode.AntiAlias;
-            using (SolidBrush redBrush = new System.Drawing.SolidBrush(Color.FromArgb(128, 255, 0, 0)))
-            {
-                var beam = new Rectangle(0, 0, 4, -world.size * 2);
-                e.Graphics.FillEllipse(redBrush, beam);
-            }
+
+            var beam = new Rectangle(0, 0, 4, -world.size * 2);
+            e.Graphics.FillEllipse(TransRedBrush, beam);
         }
 
-
+        /// <summary>
+        /// Draws the background of the world stretched to the size of the world.
+        /// </summary>
+        /// <param name="e"></param>
         private void DrawBackground(PaintEventArgs e)
         {
-            e.Graphics.DrawImage(backgroundImage, 0, 0, world.size, world.size);
+            e.Graphics.DrawImage(ArenaBackgroundImage, 0, 0, world.size, world.size);
         }
         #endregion
 
-        // This method is invoked when the DrawingPanel needs to be re-drawn
+        /// <summary>
+        /// Invoked when the DrawingPanel needs to be re-drawn. Draws all objects in the world based on their
+        /// spatial relation to the user's tank.
+        /// </summary>
+        /// <param name="e"></param>
         protected override void OnPaint(PaintEventArgs e)
         {
             if (world.HasPlayerTank())
@@ -282,10 +369,6 @@ namespace TankWars.Client.View
 
                     // - Draw Background
                     DrawBackground(e);
-
-                    // // - Draw the Player
-                    // var player = world.GetTank(world.Player.Id);
-                    // DrawObjectWithTransform(e, player, world.size, player.Location.GetX(), player.Location.GetY(), player.Direction.ToAngle(), PlayerDrawer);
 
                     // - Draw the walls
                     foreach (int wallId in world.GetWallIds())
@@ -330,17 +413,30 @@ namespace TankWars.Client.View
                     }
                 }
 
-            // Do anything that Panel (from which we inherit) needs to do
+            // Do anything that Panel (from which this inherits) needs to do
             base.OnPaint(e);
         }
 
 
+        /// <summary>
+        /// Basically on overglorified struct,
+        ///   grabs all of the appropriate image files for drawing a tank,
+        ///   & its projectiles based up a string representing the color
+        ///   (i.e. the color is part of the filename of the objects).
+        /// </summary>
         private class ImageCollection
         {
             public Image Turret;
             public Image Body;
             public Image Projectile;
 
+            /// <summary>
+            /// Basically on overglorified struct,
+            ///   grabs all of the appropriate image files for drawing a tank,
+            ///   & its projectiles based up a string representing the color
+            ///   (i.e. the color is part of the filename of the objects).
+            /// </summary>
+            /// <param name="color">Valid string representing the desired color option</param>
             public ImageCollection(string color)
             {
                 Turret = Image.FromFile($"{imgDir}/{color}Turret.png");
@@ -348,14 +444,15 @@ namespace TankWars.Client.View
                 Projectile = Image.FromFile($"{imgDir}/{color}Shot.png");
             }
 
+            /// <summary>
+            /// Call dispose on all of the images in the Image collection.
+            /// </summary>
             public void Dispose()
             {
                 Turret.Dispose();
                 Body.Dispose();
                 Projectile.Dispose();
             }
-
-
         }
     }
 }
