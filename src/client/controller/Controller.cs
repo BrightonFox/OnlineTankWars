@@ -318,18 +318,19 @@ namespace TankWars.Client.Control
         /// </summary>
         private void ProcessInputs()
         {
+            // Command command;
             lock (Player)
             {
-                if (movingPressed || mousePressed)
-                {
+                // if (movingPressed || mousePressed)
+                // {
                     var command = new Command(moveDir, fireType, targetDir);
                     Networking.Send(State.TheSocket, JsonConvert.SerializeObject(command) + '\n');
-                }
+                // }
                 if (fireType == "alt")
                 {
                     fireType = "none";
                     mousePressed = false;
-                }
+                }                    
             }
         }
 
@@ -368,7 +369,7 @@ namespace TankWars.Client.Control
         {
             lock (Player)
             {
-                oldMoveDir = (movingPressed) ? moveDir : "none";
+                // oldMoveDir = (movingPressed) ? moveDir : "none";
                 movingPressed = true;
                 moveDir = direction;
             }
@@ -382,16 +383,15 @@ namespace TankWars.Client.Control
         {
             lock (Player)
             {
-                if (oldMoveDir == direction)
-                {
-                    oldMoveDir = "none";
-                    movingPressed = false;
-                    return;
-                }
+                // if (oldMoveDir == direction)
+                // {
+                //     oldMoveDir = "none";
+                //     movingPressed = false;
+                //     return;
+                // }
                 if (moveDir != direction)
                     return;
-                movingPressed = (oldMoveDir != "none");
-                moveDir = oldMoveDir;
+                moveDir = "none"; //oldMoveDir;
             }
         }
 
@@ -418,7 +418,6 @@ namespace TankWars.Client.Control
             {
                 if (fireType != fire)
                     return;
-                mousePressed = false;
                 fireType = "none";
             }
         }

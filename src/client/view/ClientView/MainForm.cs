@@ -73,6 +73,7 @@ namespace TankWars.Client.View
             // - Set up the form. ------
             this.Text = "Tank Wars - Client (JustBroken)";
             serverAddressText.Text = "localhost"; //"tankwars.eng.utah.edu";
+            this.KeyPreview = true;
             nameText.MaxLength = 16;
 
             // - Assign listeners for all form items interactions
@@ -80,13 +81,8 @@ namespace TankWars.Client.View
             aboutButton.Click += OnAboutBtn;
             connectButton.Click += OnBtnConnect;
             disconnectButton.Click += OnBtnDisconnect;
-            serverAddressText.KeyDown += OnAddressSubmitted;
+            serverAddressText.KeyPress += new KeyPressEventHandler(OnAddressSubmitted);
             this.FormClosing += OnMyFormClosing;
-
-            // - Set up key and mouse handlers ----
-            this.KeyDown += HandleKeyDown;
-            this.KeyUp += HandleKeyUp;
-
 
         }
 
@@ -150,6 +146,9 @@ namespace TankWars.Client.View
             drawingPanel.MouseDown += HandleMouseDown;
             drawingPanel.MouseUp += HandleMouseUp;
             drawingPanel.MouseMove += HandleMouseMove;
+            // - Set up key handlers ----
+            this.KeyDown += HandleKeyDown;
+            this.KeyUp += HandleKeyUp;
             // controller.ServerDisconnected += drawingPanel.DisposeOfImages;
         }
 
@@ -183,6 +182,9 @@ namespace TankWars.Client.View
             serverAddressText.Enabled = true;
             disconnectButton.Enabled = false;
             this.Controls.Remove(drawingPanel);
+            // - Set up key and mouse handlers ----
+            this.KeyDown -= HandleKeyDown;
+            this.KeyUp -= HandleKeyUp;
             // - Disable the global form to capture key presses
             this.KeyPreview = false;
         }
@@ -341,13 +343,12 @@ namespace TankWars.Client.View
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private void OnAddressSubmitted(object sender, KeyEventArgs e)
+        private void OnAddressSubmitted(object sender, KeyPressEventArgs e)
         {
-            if (e.KeyCode == Keys.Enter)
+            if (e.KeyChar == (char)Keys.Enter)
+            {
                 OnBtnConnect(sender, e);
-            // Prevent other key handlers from running
-            e.SuppressKeyPress = true;
-            e.Handled = true;
+            }
         }
 
         /// <summary>

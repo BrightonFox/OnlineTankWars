@@ -106,6 +106,7 @@ namespace TankWars.Client.View
 
             // - Place and add the serverAddress textbox
             serverAddressText = new TextBox();
+            serverAddressText.Enabled = true;
             serverAddressText.Location = new Point(serverAddressLabel.Location.X + serverAddressLabel.Size.Width+1, 8);
             serverAddressText.Size = new Size(connectButton.Location.X - serverAddressText.Location.X - 10, 15);
             this.Controls.Add(serverAddressText);
