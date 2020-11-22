@@ -58,6 +58,7 @@ namespace TankWars.Client.Control
         private bool movingPressed = false;
         private bool mousePressed = false;
         private string moveDir = "none";
+        private string oldMoveDir = "none";
         private string fireType = "none";
         private Vector2D targetDir;
 
@@ -351,6 +352,7 @@ namespace TankWars.Client.Control
             World = null;
             movingPressed = false;
             mousePressed = false;
+            oldMoveDir = "none";
             moveDir = "none";
             fireType = "none";
         }
@@ -366,6 +368,7 @@ namespace TankWars.Client.Control
         {
             lock (Player)
             {
+                oldMoveDir = (movingPressed) ? moveDir : "none";
                 movingPressed = true;
                 moveDir = direction;
             }
@@ -379,10 +382,16 @@ namespace TankWars.Client.Control
         {
             lock (Player)
             {
+                if (oldMoveDir == direction)
+                {
+                    oldMoveDir = "none";
+                    movingPressed = false;
+                    return;
+                }
                 if (moveDir != direction)
                     return;
-                movingPressed = false;
-                moveDir = "none";
+                movingPressed = (oldMoveDir != "none");
+                moveDir = oldMoveDir;
             }
         }
 
