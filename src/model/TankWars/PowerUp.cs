@@ -56,5 +56,27 @@ namespace TankWars.JsonObjects
         /// </summary>
         [JsonProperty(PropertyName = "died")]
         protected bool _isDead;
+
+
+        /// <summary>
+        /// Return a string representation of a <see cref="Powerup"/>,
+        ///  using json formatting.
+        /// Appending a '\n' at the end for the networking protocol.
+        /// </summary>
+        /// <returns>json representation of the object</returns>
+        public override string ToString()
+        {
+            return ToJson() + '\n';
+        }
+
+        /// <summary>
+        /// Return a string representation of a <see cref="Powerup"/>,
+        ///  using json formatting.
+        /// </summary>
+        /// <returns>json representation of the object</returns>
+        public string ToJson()
+        {
+            return JsonConvert.SerializeObject(this);
+        }
     }
 }

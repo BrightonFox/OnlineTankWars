@@ -64,5 +64,26 @@ namespace TankWars.JsonObjects
         /// </summary>
         [JsonProperty(PropertyName = "tdir")]
         protected Vector2D _turretDirection;
+
+        /// <summary>
+        /// Return a string representation of a <see cref="Command"/>,
+        ///  using json formatting.
+        /// Appending a '\n' at the end for the networking protocol.
+        /// </summary>
+        /// <returns>json representation of the object</returns>
+        public override string ToString()
+        {
+            return ToJson() + '\n';
+        }
+
+        /// <summary>
+        /// Return a string representation of a <see cref="Command"/>,
+        ///  using json formatting.
+        /// </summary>
+        /// <returns>json representation of the object</returns>
+        public string ToJson()
+        {
+            return JsonConvert.SerializeObject(this);
+        }
     }
 }

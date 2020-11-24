@@ -17,7 +17,7 @@
 using System;
 using TankWars.MathUtils;
 
-namespace TankWars.Client.Model
+namespace TankWars.Server.Model
 {
     /// <inheritdoc cref="TankWars.JsonObjects.Beam" />
     /// <summary>
@@ -38,16 +38,16 @@ namespace TankWars.Client.Model
         }
 
         /// <inheritdoc cref="TankWars.JsonObjects.Beam._id" />
-        public int Id { get {return _id;} private set {return;} }
+        public int Id { get { return _id; } internal set { _id = value; } }
         
         /// <inheritdoc cref="TankWars.JsonObjects.Beam._origin" />
-        public Vector2D Origin { get {return _origin;} private set {return;} }
+        public Vector2D Origin { get { return _origin; } internal set { _origin = value; } }
         
         /// <inheritdoc cref="TankWars.JsonObjects.Beam._direction" />
-        public Vector2D Direction { get {return _direction;} private set {return;} }
+        public Vector2D Direction { get { return _direction; } internal set { _direction = value; } }
 
         /// <inheritdoc cref="TankWars.JsonObjects.Beam._ownerId" />
-        public int OwnerId { get { return _ownerId; } private set { return; } }
+        public int OwnerId { get { return _ownerId; } internal set { _ownerId = value; } }
 
     }
 }

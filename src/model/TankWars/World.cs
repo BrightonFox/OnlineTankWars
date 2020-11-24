@@ -57,7 +57,7 @@ namespace TankWars
         /// <summary>
         /// The length of each side of the world
         /// </summary>
-        public int size { get; private set; }
+        public int size { get; protected set; }
 
         /// <summary>
         /// An object that holds references to all of the objects 

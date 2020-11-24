@@ -17,18 +17,19 @@
 using System;
 using TankWars.MathUtils;
 
-namespace TankWars.Client.Model
+namespace TankWars.Server.Model
 {
     /// <inheritdoc cref="TankWars.JsonObjects.Wall" />
     public class Wall : TankWars.JsonObjects.Wall
     {
         /// <inheritdoc cref="TankWars.JsonObjects.Wall._id" />
-        public int Id { get { return _id; } private set {return;} }
+        public int Id { get { return _id; } internal set { _id = value; } }
 
         /// <inheritdoc cref="TankWars.JsonObjects.Wall._p1" />
-        public Vector2D P1 { get { return _p1; } private set {return;} }
+        public Vector2D P1 { get { return _p1; } internal set { _p1 = value; } }
 
         /// <inheritdoc cref="TankWars.JsonObjects.Wall._p2" />
-        public Vector2D P2 { get { return _p2; } private set {return;} }
+        public Vector2D P2 { get { return _p2; } internal set { _p2 = value; } }
+        
     }
 }

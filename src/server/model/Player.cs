@@ -16,7 +16,7 @@
  */
 
 
-namespace TankWars.Client.Model
+namespace TankWars.Server.Model
 {
     /// <summary>
     /// Object representing the information associated with the player using the client.

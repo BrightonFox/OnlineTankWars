@@ -25,7 +25,22 @@ namespace TankWars.Server
     {
         static void Main(string[] args)
         {
-            Console.WriteLine("Hello World!");
+            var ctrl = new Controller();
+            ctrl.OnMessageLog += LogMessage;
+            ctrl.OnNetworkError += LogErrorMessage;
+
+
+            ctrl.StartServer("TODO: Figure out where the settings file will be...")
+        }
+
+        private static void LogMessage(string msg)
+        {
+            Console.Write(msg);
+        }
+
+        private static void LogErrorMessage(string msg)
+        {
+            Console.WriteLine("\n>>>>>>>>>>  !! ERROR !!\n"+msg);
         }
     }
 }
