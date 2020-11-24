@@ -156,6 +156,7 @@ namespace TankWars.Client.Model
             return Projectiles.Keys;
         }
 
+        /// <summary>
         /// Returns an list/<see cref="Enumerable"/>
         ///  that contains all of the <see cref="TankWars.Client.Model.Wall.Id"/>s
         ///  that the world contains.

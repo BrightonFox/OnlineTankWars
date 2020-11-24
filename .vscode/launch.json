@@ -4,6 +4,17 @@
    // For further information visit https://github.com/OmniSharp/omnisharp-vscode/blob/master/debugger-launchjson.md
    "version": "0.2.0",
    "configurations": [
+       {
+           "name": "TankWars Server (console application) - DEBUG",
+           "type": "coreclr",
+           "request": "launch",
+           "preLaunchTask": "build",
+           "program": "${workspaceFolder}/src/server/view/bin/Debug/netcoreapp3.1/ServerView.dll",
+           "args": [],
+           "cwd": "${workspaceFolder}",
+           "stopAtEntry": false,
+           "console": "internalConsole"
+       },
         {
             "name": ".NET Core Launch (console)",
             "type": "coreclr",
