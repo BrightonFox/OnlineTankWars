@@ -55,10 +55,8 @@ namespace TankWars.Client.Control
         private static readonly Regex MsgSplitPattern = new Regex(@"(?<=[\n])");
 
         private SocketState State;
-        private bool movingPressed = false;
         private bool mousePressed = false;
-        private string moveDir = "none";
-        private string oldMoveDir = "none";
+        private List<string> moveDir;
         private string fireType = "none";
         private Vector2D targetDir;
 
@@ -127,6 +125,7 @@ namespace TankWars.Client.Control
         {
             this.UpdateArrived += this.ProcessInputs;
             this.UpdateArrived += this.GameLoop;
+            this.ServerConnectionMade += () => moveDir = new List<string>() {"none"};
         }
 
 
@@ -318,19 +317,16 @@ namespace TankWars.Client.Control
         /// </summary>
         private void ProcessInputs()
         {
-            // Command command;
             lock (Player)
             {
-                // if (movingPressed || mousePressed)
-                // {
-                    var command = new Command(moveDir, fireType, targetDir);
-                    Networking.Send(State.TheSocket, JsonConvert.SerializeObject(command) + '\n');
-                // }
+                var command = new Command(moveDir[0], fireType, targetDir);
+                Networking.Send(State.TheSocket, JsonConvert.SerializeObject(command) + '\n');
+                
                 if (fireType == "alt")
                 {
                     fireType = "none";
                     mousePressed = false;
-                }                    
+                }
             }
         }
 
@@ -342,7 +338,7 @@ namespace TankWars.Client.Control
             Command command;
             lock (Player)
             {
-                command = new Command(moveDir, fireType, targetDir);
+                command = new Command(moveDir[0], fireType, targetDir);
             }
             State.OnNetworkAction = (s) => { return; };
             Networking.SendAndClose(State.TheSocket, JsonConvert.SerializeObject(command) + '\n');
@@ -351,10 +347,8 @@ namespace TankWars.Client.Control
             //? i.e. make sure you're ready to connect to a server again without restarting the application.
             ServerDisconnected();
             World = null;
-            movingPressed = false;
             mousePressed = false;
-            oldMoveDir = "none";
-            moveDir = "none";
+            moveDir = new List<string>() { "none" };
             fireType = "none";
         }
         #endregion
@@ -369,9 +363,8 @@ namespace TankWars.Client.Control
         {
             lock (Player)
             {
-                // oldMoveDir = (movingPressed) ? moveDir : "none";
-                movingPressed = true;
-                moveDir = direction;
+                if (!moveDir.Contains(direction))
+                    moveDir.Insert(0, direction);
             }
         }
 
@@ -383,15 +376,8 @@ namespace TankWars.Client.Control
         {
             lock (Player)
             {
-                // if (oldMoveDir == direction)
-                // {
-                //     oldMoveDir = "none";
-                //     movingPressed = false;
-                //     return;
-                // }
-                if (moveDir != direction)
-                    return;
-                moveDir = "none"; //oldMoveDir;
+                if (moveDir.Contains(direction))
+                    moveDir.Remove(direction);
             }
         }
 
