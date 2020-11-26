@@ -25,29 +25,26 @@ namespace TankWars.Server.Model
     /// </summary>
     public class Beam : TankWars.JsonObjects.Beam
     {
-    
-        private int _lifeSpan = 0;
-        
-        /// <summary>
-        /// Int representing how long a beam has been alive.
-        /// <para>Every time it is called it's value will be incremented by 1</para>
-        /// </summary>
-        public int LifeSpan {
-            get { return _lifeSpan++;}
-            private set {_lifeSpan = value;}
+
+        public Beam(int id, int ownerId, Vector2D origin, Vector2D dir) : base()
+        {
+            _id = id;
+            _ownerId = ownerId;
+            _origin = origin;
+            _direction = dir;
         }
 
         /// <inheritdoc cref="TankWars.JsonObjects.Beam._id" />
-        public int Id { get { return _id; } internal set { _id = value; } }
+        public int Id { get { return _id; } private set { return; } }
         
         /// <inheritdoc cref="TankWars.JsonObjects.Beam._origin" />
-        public Vector2D Origin { get { return _origin; } internal set { _origin = value; } }
+        public Vector2D Origin { get { return _origin; } private set { return; } }
         
         /// <inheritdoc cref="TankWars.JsonObjects.Beam._direction" />
-        public Vector2D Direction { get { return _direction; } internal set { _direction = value; } }
+        public Vector2D Direction { get { return _direction; } private set { return; } }
 
         /// <inheritdoc cref="TankWars.JsonObjects.Beam._ownerId" />
-        public int OwnerId { get { return _ownerId; } internal set { _ownerId = value; } }
+        public int OwnerId { get { return _ownerId; } private set { return; } }
 
     }
 }

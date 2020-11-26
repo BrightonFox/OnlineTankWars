@@ -16,8 +16,8 @@
 
 using System;
 
-using   TankWars.Server.Control;
- 
+using TankWars.Server.Control;
+
 
 namespace TankWars.Server
 {
@@ -29,8 +29,17 @@ namespace TankWars.Server
             ctrl.OnMessageLog += LogMessage;
             ctrl.OnNetworkError += LogErrorMessage;
 
+            ctrl.StartServer();
 
-            ctrl.StartServer("TODO: Figure out where the settings file will be...")
+            var running = true;
+            while (running)
+            {
+                if (Console.ReadLine() == "Stop")
+                {
+                    ctrl.StopServer();
+                    running = false;
+                }
+            }
         }
 
         private static void LogMessage(string msg)
@@ -40,7 +49,7 @@ namespace TankWars.Server
 
         private static void LogErrorMessage(string msg)
         {
-            Console.WriteLine("\n>>>>>>>>>>  !! ERROR !!\n"+msg);
+            Console.WriteLine("\n>>>>>>>>>>  !! ERROR !!\n" + msg);
         }
     }
 }

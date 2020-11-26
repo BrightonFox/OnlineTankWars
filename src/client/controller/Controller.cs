@@ -356,7 +356,10 @@ namespace TankWars.Client.Control
 
         #region MovementControls
         /// <summary>
-        /// Updates the controller to show that the given direction is being help down
+        /// Updates the controller to show that the given direction is being help down.
+        /// <para>
+        /// !! DO NOT EVER GIVE "none" as <paramref name="direction"/> !!
+        /// </para>
         /// </summary>
         /// <param name="direction">"up", "down", "left", "right" according to how the player tank should move</param>
         public void HandleMoveRequest(string direction)
@@ -370,6 +373,9 @@ namespace TankWars.Client.Control
 
         /// <summary>
         /// Updates the controller to show that the given direction is no longer being help down
+        /// <para>
+        /// !! DO NOT EVER GIVE "none" as <paramref name="direction"/> !!
+        /// </para>
         /// </summary>
         /// <param name="direction">"up", "down", "left", or "right" according to how the player tank should move</param>
         public void CancelMoveRequest(string direction)

@@ -22,14 +22,35 @@ namespace TankWars.Server.Model
     /// <inheritdoc cref="TankWars.JsonObjects.Wall" />
     public class Wall : TankWars.JsonObjects.Wall
     {
+        
+        public Wall(int id, Vector2D p1, Vector2D p2, int worldSize) : base()
+        {
+            
+        }
+
+
+        /// <summary>
+        /// Boolean if the wall is vertical or horizontal.
+        /// </summary>
+        public bool isHorizontal { get; internal set; }
+
+
         /// <inheritdoc cref="TankWars.JsonObjects.Wall._id" />
-        public int Id { get { return _id; } internal set { _id = value; } }
+        public int Id { get { return _id; } private set { return; } }
 
-        /// <inheritdoc cref="TankWars.JsonObjects.Wall._p1" />
-        public Vector2D P1 { get { return _p1; } internal set { _p1 = value; } }
+        /// <summary>
+        /// The point that contains either the upper x/y coordinate fo the wall 
+        ///  dependent on if the wall <see cref="isHorisonatal"/> 
+        /// (then upper x or vise versa)
+        /// </summary>
+        public Vector2D PUp { get { return _p1; } private set { return; } }
 
-        /// <inheritdoc cref="TankWars.JsonObjects.Wall._p2" />
-        public Vector2D P2 { get { return _p2; } internal set { _p2 = value; } }
+        /// <summary>
+        /// The point that contains either the lower x/y coordinate fo the wall 
+        ///  dependent on if the wall <see cref="isHorisonatal"/> 
+        /// (then lower x or vise versa)
+        /// </summary>
+        public Vector2D PLow { get { return _p2; } private set { return; } }
         
     }
 }

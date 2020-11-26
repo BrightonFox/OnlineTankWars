@@ -57,7 +57,7 @@ namespace TankWars
         /// <summary>
         /// The length of each side of the world
         /// </summary>
-        public int size { get; protected set; }
+        public int Size { get; protected set; }
 
         /// <summary>
         /// An object that holds references to all of the objects 
@@ -73,7 +73,7 @@ namespace TankWars
             Walls = new Dictionary<int, TankWars.JsonObjects.Wall>();
             Projectiles = new Dictionary<int, Projectile>();
 
-            size = _size;
+            Size = _size;
         }
 
     }

@@ -331,7 +331,7 @@ namespace TankWars.Client.View
 
             e.Graphics.SmoothingMode = System.Drawing.Drawing2D.SmoothingMode.AntiAlias;
 
-            var beam = new Rectangle(0, 0, 4, -world.size * 2);
+            var beam = new Rectangle(0, 0, 4, -world.Size * 2);
             e.Graphics.FillEllipse(TransRedBrush, beam);
         }
 
@@ -341,7 +341,7 @@ namespace TankWars.Client.View
         /// <param name="e"></param>
         private void DrawBackground(PaintEventArgs e)
         {
-            e.Graphics.DrawImage(ArenaBackgroundImage, 0, 0, world.size, world.size);
+            e.Graphics.DrawImage(ArenaBackgroundImage, 0, 0, world.Size, world.Size);
         }
         #endregion
 
@@ -359,11 +359,11 @@ namespace TankWars.Client.View
                     double playerY = world.GetTank(world.Player.Id).Location.GetY();
 
                     // - calculate view/world size ratio
-                    double ratio = (double)viewSize / (double)world.size;
-                    int halfSizeScaled = (int)(world.size / 2.0 * ratio);
+                    double ratio = (double)viewSize / (double)world.Size;
+                    int halfSizeScaled = (int)(world.Size / 2.0 * ratio);
 
-                    double inverseTranslateX = -WorldSpaceToImageSpace(world.size, playerX) + halfSizeScaled;
-                    double inverseTranslateY = -WorldSpaceToImageSpace(world.size, playerY) + halfSizeScaled;
+                    double inverseTranslateX = -WorldSpaceToImageSpace(world.Size, playerX) + halfSizeScaled;
+                    double inverseTranslateY = -WorldSpaceToImageSpace(world.Size, playerY) + halfSizeScaled;
 
                     e.Graphics.TranslateTransform((float)inverseTranslateX, (float)inverseTranslateY);
 
@@ -374,7 +374,7 @@ namespace TankWars.Client.View
                     foreach (int wallId in world.GetWallIds())
                     {
                         var wall = world.GetWall(wallId);
-                        DrawObjectWithTransform(e, wall, world.size,
+                        DrawObjectWithTransform(e, wall, world.Size,
                                                 ((wall.P1.GetX() <= wall.P2.GetX()) ? wall.P1.GetX() : wall.P2.GetX()),
                                                 ((wall.P1.GetY() <= wall.P2.GetY()) ? wall.P1.GetY() : wall.P2.GetY()),
                                                 0, WallDrawer);
@@ -386,30 +386,30 @@ namespace TankWars.Client.View
                         var tank = world.GetTank(tankId);
                         if (tank.Health == 0)
                             continue;
-                        DrawObjectWithTransform(e, tank, world.size, tank.Location.GetX(), tank.Location.GetY(), tank.Direction.ToAngle(), TankDrawer);
-                        DrawObjectWithTransform(e, tank, world.size, tank.Location.GetX(), tank.Location.GetY(), tank.TurretDirection.ToAngle(), TurretDrawer);
-                        DrawObjectWithTransform(e, tank, world.size, tank.Location.GetX(), tank.Location.GetY(), 0, PlayerDrawer);
+                        DrawObjectWithTransform(e, tank, world.Size, tank.Location.GetX(), tank.Location.GetY(), tank.Direction.ToAngle(), TankDrawer);
+                        DrawObjectWithTransform(e, tank, world.Size, tank.Location.GetX(), tank.Location.GetY(), tank.TurretDirection.ToAngle(), TurretDrawer);
+                        DrawObjectWithTransform(e, tank, world.Size, tank.Location.GetX(), tank.Location.GetY(), 0, PlayerDrawer);
                     }
 
                     // - Draw the powerups
                     foreach (int powId in world.GetPowerupIds())
                     {
                         var pow = world.GetPowerup(powId);
-                        DrawObjectWithTransform(e, pow, world.size, pow.Location.GetX(), pow.Location.GetY(), 0, PowerupDrawer);
+                        DrawObjectWithTransform(e, pow, world.Size, pow.Location.GetX(), pow.Location.GetY(), 0, PowerupDrawer);
                     }
 
                     // - Draw the projectiles
                     foreach (int projId in world.GetProjectileIds())
                     {
                         var proj = world.GetProjectile(projId);
-                        DrawObjectWithTransform(e, proj, world.size, proj.Location.GetX(), proj.Location.GetY(), proj.Direction.ToAngle(), ProjectileDrawer);
+                        DrawObjectWithTransform(e, proj, world.Size, proj.Location.GetX(), proj.Location.GetY(), proj.Direction.ToAngle(), ProjectileDrawer);
                     }
 
                     // - Draw the projectiles
                     foreach (int beamId in world.GetBeamIds())
                     {
                         var beam = world.GetBeam(beamId);
-                        DrawObjectWithTransform(e, beam, world.size, beam.Origin.GetX(), beam.Origin.GetY(), beam.Direction.ToAngle(), BeamDrawer);
+                        DrawObjectWithTransform(e, beam, world.Size, beam.Origin.GetX(), beam.Origin.GetY(), beam.Direction.ToAngle(), BeamDrawer);
                     }
                 }
 

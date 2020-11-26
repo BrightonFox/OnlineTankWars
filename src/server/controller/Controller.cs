@@ -21,8 +21,6 @@ using System.Diagnostics;
 using System.Collections.Generic;
 using System.Text.RegularExpressions;
 using System.Net.Sockets;
-using System.Net.NetworkInformation;
-using Newtonsoft.Json;
 
 using TankWars.Server.Model;
 using TankWars.NetworkUtil;
@@ -71,23 +69,27 @@ namespace TankWars.Server.Control
         }
 
 
+        /// <summary>
+        /// 
+        /// </summary>
         private void GameLoop()
         {
             Stopwatch watch = new Stopwatch();
             while (running)
             {
                 while (watch.ElapsedMilliseconds < world.MSPerFrame)
-                { /* DO NOTHING */}
+                {/* DO NOTHING */}
                 watch.Reset();
 
-                if (Clients.Count == 0)
-                    continue;
-
-                SendFrame();
+                if (Clients.Count > 0)
+                    SendFrame();
             }
         }
 
 
+        /// <summary>
+        /// 
+        /// </summary>
         private void SendFrame()
         {
             long[] clientIds = new long[Clients.Count];
@@ -95,7 +97,7 @@ namespace TankWars.Server.Control
             string frame;
             lock (world)
             {
-                frame = world.GetFrame();
+                frame = world.NextFrame();
             }
             foreach (long id in clientIds)
             {
@@ -116,7 +118,7 @@ namespace TankWars.Server.Control
         /// On a connection attempt calls <see cref="OnClientConnection"/>
         ///   via <see cref="SocketState.OnNetworkAction"/> method.
         /// </summary>
-        public void StartServer(String settingsFileDir)
+        public void StartServer(String settingsFileDir="TODO: Figure out where the settings file will be...")
         {
             Send = Networking.Send;
 
@@ -155,9 +157,11 @@ namespace TankWars.Server.Control
         /// </summary>
         private void ClientSetup(SocketState state)
         {
-            world.CreateNewPlayer((int)state.ID, state.GetData());
+            if (!world.CreateNewPlayer((int)state.ID, state.GetData()))
+                // failed to place new players tank disconencting from client !!
+                Networking.SendAndClose(state.TheSocket, "ERROR: Failed to create tank !! \n");
 
-            Networking.Send(state.TheSocket, $"{world.size}\n");
+            Networking.Send(state.TheSocket, $"{state.ID}\n{world.Size}\n");
 
             foreach (Wall wall in world.GetWalls())
             {
@@ -203,7 +207,7 @@ namespace TankWars.Server.Control
             {
                 if (msgs.Length >= 1 && msgs[0][msgs[0].Length - 1] == '\n')
                 {
-                    world.RegisterCommand((int)state.ID, JsonConvert.DeserializeObject<Command>(msgs[0]));
+                    world.RegisterCommand((int)state.ID, msgs[0]);
                     state.RemoveData(0, msgs[0].Length);
                     for (int ii = 1; ii < msgs.Length; ii++)
                         if (msgs.Length > 1 && msgs[0][msgs[0].Length - 1] != '\n')
@@ -217,4 +221,6 @@ namespace TankWars.Server.Control
             Networking.GetData(state);
         }
     }
+
+    
 }

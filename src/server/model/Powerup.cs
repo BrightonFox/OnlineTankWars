@@ -22,8 +22,14 @@ namespace TankWars.Server.Model
     /// <inheritdoc cref="TankWars.JsonObjects.Powerup" />
     public class Powerup : TankWars.JsonObjects.Powerup
     {
+        public Powerup(int id) : base()
+        {
+            _isDead = false;
+            _id = id;
+        }
+        
         /// <inheritdoc cref="TankWars.JsonObjects.Powerup._id" />
-        public int Id { get { return _id; } internal set { _id = value; } }
+        public int Id { get { return _id; } private set { return; } }
 
         /// <inheritdoc cref="TankWars.JsonObjects.Powerup._location" />
         public Vector2D Location { get { return _location; } internal set { _location = value; } }
