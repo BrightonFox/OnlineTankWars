@@ -301,8 +301,8 @@ namespace TankWars.Client.View
         {
             Wall w = o as Wall;
 
-            int wallWidth = (int)Math.Abs(w.P1.GetX() - w.P2.GetX());
-            int wallHeight = (int)Math.Abs(w.P1.GetY() - w.P2.GetY());
+            int wallWidth = (int)Math.Abs(w.P1.X - w.P2.X);
+            int wallHeight = (int)Math.Abs(w.P1.Y - w.P2.Y);
             int unitSize = 50;
 
             // determines if the passed wall is vertical or horizontal and tiles the graphic accordingly
@@ -355,8 +355,8 @@ namespace TankWars.Client.View
             if (world.HasPlayerTank())
                 lock (world)
                 {
-                    double playerX = world.GetTank(world.Player.Id).Location.GetX();
-                    double playerY = world.GetTank(world.Player.Id).Location.GetY();
+                    double playerX = world.GetTank(world.Player.Id).Location.X;
+                    double playerY = world.GetTank(world.Player.Id).Location.Y;
 
                     // - calculate view/world size ratio
                     double ratio = (double)viewSize / (double)world.Size;
@@ -375,8 +375,8 @@ namespace TankWars.Client.View
                     {
                         var wall = world.GetWall(wallId);
                         DrawObjectWithTransform(e, wall, world.Size,
-                                                ((wall.P1.GetX() <= wall.P2.GetX()) ? wall.P1.GetX() : wall.P2.GetX()),
-                                                ((wall.P1.GetY() <= wall.P2.GetY()) ? wall.P1.GetY() : wall.P2.GetY()),
+                                                ((wall.P1.X <= wall.P2.X) ? wall.P1.X : wall.P2.X),
+                                                ((wall.P1.Y <= wall.P2.Y) ? wall.P1.Y : wall.P2.Y),
                                                 0, WallDrawer);
                     }
 
@@ -386,30 +386,30 @@ namespace TankWars.Client.View
                         var tank = world.GetTank(tankId);
                         if (tank.Health == 0)
                             continue;
-                        DrawObjectWithTransform(e, tank, world.Size, tank.Location.GetX(), tank.Location.GetY(), tank.Direction.ToAngle(), TankDrawer);
-                        DrawObjectWithTransform(e, tank, world.Size, tank.Location.GetX(), tank.Location.GetY(), tank.TurretDirection.ToAngle(), TurretDrawer);
-                        DrawObjectWithTransform(e, tank, world.Size, tank.Location.GetX(), tank.Location.GetY(), 0, PlayerDrawer);
+                        DrawObjectWithTransform(e, tank, world.Size, tank.Location.X, tank.Location.Y, tank.Direction.ToAngle(), TankDrawer);
+                        DrawObjectWithTransform(e, tank, world.Size, tank.Location.X, tank.Location.Y, tank.TurretDirection.ToAngle(), TurretDrawer);
+                        DrawObjectWithTransform(e, tank, world.Size, tank.Location.X, tank.Location.Y, 0, PlayerDrawer);
                     }
 
                     // - Draw the powerups
                     foreach (int powId in world.GetPowerupIds())
                     {
                         var pow = world.GetPowerup(powId);
-                        DrawObjectWithTransform(e, pow, world.Size, pow.Location.GetX(), pow.Location.GetY(), 0, PowerupDrawer);
+                        DrawObjectWithTransform(e, pow, world.Size, pow.Location.X, pow.Location.Y, 0, PowerupDrawer);
                     }
 
                     // - Draw the projectiles
                     foreach (int projId in world.GetProjectileIds())
                     {
                         var proj = world.GetProjectile(projId);
-                        DrawObjectWithTransform(e, proj, world.Size, proj.Location.GetX(), proj.Location.GetY(), proj.Direction.ToAngle(), ProjectileDrawer);
+                        DrawObjectWithTransform(e, proj, world.Size, proj.Location.X, proj.Location.Y, proj.Direction.ToAngle(), ProjectileDrawer);
                     }
 
                     // - Draw the projectiles
                     foreach (int beamId in world.GetBeamIds())
                     {
                         var beam = world.GetBeam(beamId);
-                        DrawObjectWithTransform(e, beam, world.Size, beam.Origin.GetX(), beam.Origin.GetY(), beam.Direction.ToAngle(), BeamDrawer);
+                        DrawObjectWithTransform(e, beam, world.Size, beam.Origin.X, beam.Origin.Y, beam.Direction.ToAngle(), BeamDrawer);
                     }
                 }
 

@@ -91,19 +91,13 @@ namespace TankWars.MathUtils
     /// Get the x component
     /// </summary>
     /// <returns></returns>
-    public double GetX()
-    {
-      return x;
-    }
+    public double X { get {return x;} set {return;}}
 
     /// <summary>
     /// Get the y component
     /// </summary>
     /// <returns></returns>
-    public double GetY()
-    {
-      return y;
-    }
+    public double Y { get {return y;} set {return;}}
 
     /// <summary>
     /// Clamp x and y to be within the range -1 .. 1
@@ -204,8 +198,8 @@ namespace TankWars.MathUtils
     public static Vector2D operator *(Vector2D v, double s)
     {
       Vector2D retval = new Vector2D();
-      retval.x = v.GetX() * s;
-      retval.y = v.GetY() * s;
+      retval.x = v.X * s;
+      retval.y = v.Y * s;
       return retval;
     }
 
@@ -235,7 +229,7 @@ namespace TankWars.MathUtils
     /// <returns></returns>
     public double Dot(Vector2D v)
     {
-      return GetX() * v.GetX() + GetY() * v.GetY();
+      return X * v.X + Y * v.Y;
     }
 
   }
