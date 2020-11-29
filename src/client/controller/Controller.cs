@@ -320,7 +320,7 @@ namespace TankWars.Client.Control
             lock (Player)
             {
                 var command = new Command(moveDir[0], fireType, targetDir);
-                Networking.Send(State.TheSocket, JsonConvert.SerializeObject(command) + '\n');
+                Networking.Send(State.TheSocket, command.ToString());
                 
                 if (fireType == "alt")
                 {

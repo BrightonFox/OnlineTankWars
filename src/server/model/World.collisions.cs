@@ -21,6 +21,11 @@ namespace TankWars.Server.Model
     public partial class World
     {
 
+        private static readonly Vector2D V_UP = new Vector2D(0, -1);
+        private static readonly Vector2D V_DOWN = new Vector2D(0, 1);
+        private static readonly Vector2D V_LEFT = new Vector2D(-1, 0);
+        private static readonly Vector2D V_RIGHT = new Vector2D(1, 0);
+
         /// <summary>
         /// Takes in an object (<paramref name="obj"/>), 
         ///  its centerpoint location adjusted for movement (<paramref name="loc"/>), 
@@ -47,16 +52,30 @@ namespace TankWars.Server.Model
 
             // - Check Collision with wall ----
             foreach (Wall wall in Walls.Values)
-                if (wall.isHorizontal)
+                if (wall.IsHorizontal)
                 {
                     if (loc.X < wall.PUp.X + WallSize / 2 && loc.X > wall.PLow.X - WallSize / 2)
+                    {
                         if (Math.Abs(loc.Y - wall.PUp.Y) <= WallSize / 2 + radius)
+                            return wall;
+                    }
+                    else if (loc.Y < wall.PUp.Y + WallSize / 2 && loc.Y > wall.PLow.Y - WallSize / 2) 
+                        if (Math.Abs(loc.X - wall.PUp.X) <= WallSize / 2 + radius ||
+                                Math.Abs(loc.X - wall.PLow.X) <= WallSize / 2 + radius)
                             return wall;
                 }
                 else
+                {
                     if (loc.Y < wall.PUp.Y + WallSize / 2 && loc.Y > wall.PLow.Y - WallSize / 2)
-                    if (Math.Abs(loc.X - wall.PUp.X) <= WallSize / 2 + radius)
-                        return wall;
+                    {
+                        if (Math.Abs(loc.X - wall.PUp.X) <= WallSize / 2 + radius)
+                            return wall;
+                    }
+                    else if (loc.X < wall.PUp.X + WallSize / 2 && loc.X > wall.PLow.X - WallSize / 2)
+                        if (Math.Abs(loc.Y - wall.PUp.Y) <= WallSize / 2 + radius ||
+                                Math.Abs(loc.Y - wall.PLow.Y) <= WallSize / 2 + radius)
+                            return wall;
+                }
 
             // - Check Tank collision ----
             if (type != typeof(Tank))
@@ -65,7 +84,7 @@ namespace TankWars.Server.Model
                         return tank;
 
             // - Check Projectile Collision ----
-            if (type != typeof(Powerup))
+            if (type != typeof(Powerup) && type != typeof(Projectile))
                 foreach (Projectile proj in Projectiles.Values)
                     if (isCollision(loc, radius, proj.Location, 0))
                         return proj;
@@ -100,7 +119,7 @@ namespace TankWars.Server.Model
         /// </summary>
         private Vector2D GetRandomValidLocation(object obj, int radius)
         {
-            int attempts = 64;
+            int attempts = MaxSpawnAttempts;
             Vector2D loc;
             do
             {
@@ -108,7 +127,7 @@ namespace TankWars.Server.Model
                                     rand.Next(-MaxCoordinate, MaxCoordinate));
                 if (attempts-- <= 0)
                     return null;
-            } while (CheckCollision(obj, loc, radius) == null);
+            } while (CheckCollision(obj, loc, radius) != null);
             return loc;
         }
 

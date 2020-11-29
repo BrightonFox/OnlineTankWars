@@ -16,13 +16,15 @@
 
 using System.Text;
 using TankWars.MathUtils;
+using Newtonsoft.Json;
 
 
 namespace TankWars.Server.Model
 {
     /// <inheritdoc cref="TankWars.JsonObjects.Command" />
     public class Command : TankWars.JsonObjects.Command
-    {
+    {   
+        
         /// <inheritdoc cref="TankWars.JsonObjects.Command._movement" />
         public string Movement { get { return _movement; } set { return; } }
 

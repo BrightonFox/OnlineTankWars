@@ -22,17 +22,23 @@ namespace TankWars.Server.Model
     /// <inheritdoc cref="TankWars.JsonObjects.Wall" />
     public class Wall : TankWars.JsonObjects.Wall
     {
-        
-        public Wall(int id, Vector2D p1, Vector2D p2, int worldSize) : base()
+        private static int nextId = 0;
+
+        public Wall(Vector2D p1, Vector2D p2) : base()
         {
-            
+            _id = nextId++;
+            IsHorizontal = p1.Y==p2.Y;
+            if (IsHorizontal)
+                (PUp, PLow) = (p1.X > p2.X) ? (p1, p2) : (p2, p1);
+            else
+                (PUp, PLow) = (p1.Y > p2.Y) ? (p1, p2) : (p2, p1);
         }
 
 
         /// <summary>
         /// Boolean if the wall is vertical or horizontal.
         /// </summary>
-        public bool isHorizontal { get; internal set; }
+        public bool IsHorizontal { get; private set; }
 
 
         /// <inheritdoc cref="TankWars.JsonObjects.Wall._id" />
@@ -43,14 +49,14 @@ namespace TankWars.Server.Model
         ///  dependent on if the wall <see cref="isHorisonatal"/> 
         /// (then upper x or vise versa)
         /// </summary>
-        public Vector2D PUp { get { return _p1; } private set { return; } }
+        public Vector2D PUp { get { return _p1; } private set { _p1 = value; } }
 
         /// <summary>
         /// The point that contains either the lower x/y coordinate fo the wall 
         ///  dependent on if the wall <see cref="isHorisonatal"/> 
         /// (then lower x or vise versa)
         /// </summary>
-        public Vector2D PLow { get { return _p2; } private set { return; } }
+        public Vector2D PLow { get { return _p2; } private set { _p2 = value; } }
         
     }
 }

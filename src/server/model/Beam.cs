@@ -26,9 +26,11 @@ namespace TankWars.Server.Model
     public class Beam : TankWars.JsonObjects.Beam
     {
 
-        public Beam(int id, int ownerId, Vector2D origin, Vector2D dir) : base()
+        private static int nextId = 0;
+
+        public Beam(int ownerId, Vector2D origin, Vector2D dir) : base()
         {
-            _id = id;
+            _id = nextId++;
             _ownerId = ownerId;
             _origin = origin;
             _direction = dir;

@@ -24,11 +24,14 @@ namespace TankWars.Server.Model
     public class Tank : TankWars.JsonObjects.Tank
     {
 
-        public Tank(int id, string playerName, int respawnDelay) : base()
+        public Tank(int id, string playerName) : base()
         {
             _id = id;
             _playerName = playerName;
-            RespawnDelay = respawnDelay;
+            _bodyDirection = new Vector2D(0, -1);
+            _turretDirection = new Vector2D(0, -1);
+            BeamChargeCount = 0;
+            _framesTillRespawn = World.RespawnDelay;
         }
 
 
@@ -39,7 +42,7 @@ namespace TankWars.Server.Model
             {
                 if (_health <= 0 && --_framesTillRespawn <= 0)
                 {
-                    _framesTillRespawn = RespawnDelay;
+                    _framesTillRespawn = World.RespawnDelay;
                     return 0;
                 }
                 return _framesTillRespawn;
@@ -47,14 +50,47 @@ namespace TankWars.Server.Model
             private set { return; }
         }
 
-        /// <inheritdoc cref="World.RespawnDelay"/>
-        public int RespawnDelay { get; private set; }
-
         /// <summary>
         /// Number of beams a tank can fire.
         /// Increased by 1 when tank picks up a <see cref="Powerup"/>.
         /// </summary>
-        public int BeamChargeCount {get; internal set;} 
+        public int BeamChargeCount { get; internal set; }
+
+
+        private int _turretCoolDown = 0;
+        public int TurretCoolDown
+        {
+            get { return _turretCoolDown; }
+            internal set
+            {
+                if (value <= 0)
+                {
+                    _turretCoolDown = 0;
+                }
+                else
+                    _turretCoolDown = value;
+            }
+        }
+
+
+        public bool CanFire
+        {
+            get
+            {
+                return _turretCoolDown == 0;
+            }
+            internal set
+            {
+                if (!value)
+                    _turretCoolDown = World.ProjectileFireDelay;
+            }
+        }
+
+
+        internal void TickTank()
+        {
+            TurretCoolDown--;
+        }
 
 
 
@@ -78,7 +114,6 @@ namespace TankWars.Server.Model
 
         /// <inheritdoc cref="TankWars.JsonObjects.Tank._health" />
         public int Health { get { return _health; } internal set { _health = value; } }
-
 
         /// <inheritdoc cref="TankWars.JsonObjects.Tank._isDead" />
         public bool IsDead { get { return _isDead; } internal set { _isDead = value; } }

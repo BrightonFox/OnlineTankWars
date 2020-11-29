@@ -22,9 +22,10 @@ namespace TankWars.Server.Model
     /// <inheritdoc cref="TankWars.JsonObjects.Projectile" />
     public class Projectile : TankWars.JsonObjects.Projectile
     {
-        public Projectile(int id, int ownerId, Vector2D loc, Vector2D dir) : base()
+        private static int nextId = 0;
+        public Projectile(int ownerId, Vector2D loc, Vector2D dir) : base()
         {
-            _id = id;
+            _id = nextId++;
             _ownerId = ownerId;
             _location = loc;
             _direction = dir;

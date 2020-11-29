@@ -53,14 +53,6 @@ namespace TankWars.Server.Model
             set { return; }
         }
 
-        private int _nextProjId = 0;
-        private int NextProjId
-        {
-            // ! this has a problem of overflow if the server runs for >7 years and 10 projectiles are fired every second
-            get { return _nextProjId++; }
-            set { return; }
-        }
-
 
 
         /// <summary>
@@ -81,10 +73,15 @@ namespace TankWars.Server.Model
             while (FrameCommands.Count > 0)
             {
                 var command = FrameCommands.Dequeue();
+                var tank = (Tank)Tanks[command.OwnerId];
+                tank.TickTank();
+                // - check if tank is alive ----
+                if (tank.Health <= 0)
+                    continue;
                 // - Process Fire ----
-                HandleFire(command, frame);
+                HandleFire(command, tank, frame);
                 // - Process Movement ----
-                HandleMovement(command);
+                HandleMovement(command, tank);
             }
 
             // - Build the Frame String ----
@@ -105,11 +102,16 @@ namespace TankWars.Server.Model
                     Projectiles.Remove(proj.Id);
             }
             foreach (Powerup powerup in Powerups.Values)
+            {
                 frame.Append(powerup);
+                if (powerup.IsDead)
+                    Powerups.Remove(powerup.Id);
+            }
 
             // - return the frame to send to all of the clients ----
             return frame.ToString();
         }
+
 
         /// <summary>
         /// Handle determining projectiles movements and if they
@@ -126,11 +128,12 @@ namespace TankWars.Server.Model
 
                 if (obj == null)
                     continue;
-
-                Type t = obj.GetType();
-                if (t == typeof(Tank))
+                else if (obj.GetType() == typeof(Tank))
                 {
                     var tank = obj as Tank;
+                    if (proj.OwnerId == tank.Id)
+                        continue;
+                    proj.IsDead = true;
                     if (--tank.Health > 0)
                         continue;
                     if (Tanks.Keys.Contains(proj.OwnerId))
@@ -170,32 +173,38 @@ namespace TankWars.Server.Model
             pow.Location = loc;
 
             // - add powerup to the world ----
-            Powerups.Add(id, pow);
+            Powerups.Add(pow);
         }
 
         /// <summary>
         /// Handle creating projectiles and beams.
         /// For beams process them and append them to the from.
         /// </summary>
-        private void HandleFire(Command cmd, StringBuilder frame)
+        private void HandleFire(Command cmd, Tank tank, StringBuilder frame)
         {
-            var tank = (Tank)Tanks[cmd.OwnerId];
             switch (cmd.Fire)
             {
                 case "main":
-                    int projId = NextProjId;
-                    Projectiles.Add(projId, new Projectile(projId, cmd.OwnerId, tank.Location, cmd.Direction));
+                    if (tank.CanFire)
+                    {
+                        Projectiles.Add(new Projectile(cmd.OwnerId, tank.Location, cmd.Direction));
+                        tank.CanFire = false;
+                    }
                     return;
                 case "alt":
-                    var beam = new Beam(NextProjId, cmd.OwnerId, tank.Location, cmd.Direction);
-                    frame.Append(beam);
-                    foreach (Tank otherTank in Tanks.Values)
-                        if (BeamIntersects(beam.Origin, beam.Direction, tank.Location, TankSize/2))
-                        {
-                            otherTank.Health = 0;
-                            otherTank.IsDead = true;
-                            tank.Score++;
-                        }
+                    if (tank.BeamChargeCount > 0)
+                    {
+                        var beam = new Beam(cmd.OwnerId, tank.Location, cmd.Direction);
+                        frame.Append(beam);
+                        tank.BeamChargeCount--;
+                        foreach (Tank otherTank in Tanks.Values)
+                            if (otherTank.Id != tank.Id && BeamIntersects(beam.Origin, beam.Direction, otherTank.Location, TankSize / 2))
+                            {
+                                otherTank.Health = 0;
+                                otherTank.IsDead = true;
+                                tank.Score++;
+                            }
+                    }
                     return;
                 case "none":
                 default:
@@ -207,24 +216,22 @@ namespace TankWars.Server.Model
         /// <summary>
         /// Handle the movement of the tanks.
         /// </summary>
-        private void HandleMovement(Command cmd)
+        private void HandleMovement(Command cmd, Tank tank)
         {
-            var tank = (Tank)Tanks[cmd.OwnerId];
             tank.TurretDirection = cmd.Direction;
-            Vector2D modLoc;
             switch (cmd.Movement)
             {
                 case "up":
-                    modLoc = new Vector2D(0, -TankSpeed);
+                    tank.Direction = V_UP;
                     break;
                 case "down":
-                    modLoc = new Vector2D(0, TankSpeed);
+                    tank.Direction = V_DOWN;
                     break;
                 case "left":
-                    modLoc = new Vector2D(-TankSpeed, 0);
+                    tank.Direction = V_LEFT;
                     break;
                 case "right":
-                    modLoc = new Vector2D(TankSpeed, 0);
+                    tank.Direction = V_RIGHT;
                     break;
                 case "none":
                 default:
@@ -232,7 +239,7 @@ namespace TankWars.Server.Model
             }
 
             // - Check Collisions ----
-            var newLoc = tank.Location + modLoc;
+            var newLoc = tank.Location + tank.Direction * TankSpeed;
             var obj = CheckCollision(tank, newLoc, TankSize / 2);
 
             if (obj == null)
@@ -251,41 +258,40 @@ namespace TankWars.Server.Model
             }
             else if (t == typeof(HorizontalBorder))     // Reappear on the other Horizontal Border
             {
-                var polarity = TankSpeed / modLoc.Y;
-                var borderLoc = polarity * MaxCoordinate;
+                var borderLoc = tank.Direction.Y * MaxCoordinate;
                 tank.Location = new Vector2D(tank.Location.X,
-                                        -1 * polarity * (MaxCoordinate - (TankSpeed - Math.Abs(borderLoc - tank.Location.Y))));
+                                        -1 * tank.Direction.Y * (MaxCoordinate - (TankSpeed - Math.Abs(borderLoc - tank.Location.Y))));
             }
             else if (t == typeof(VerticalBorder))       // Reappear on the other Vertical Border
             {
-                var polarity = TankSpeed / modLoc.Y;
-                var borderLoc = polarity * MaxCoordinate;
-                tank.Location = new Vector2D(-1 * polarity * (MaxCoordinate - (TankSpeed - Math.Abs(borderLoc - tank.Location.X))),
+                var borderLoc = tank.Direction.X * MaxCoordinate;
+                tank.Location = new Vector2D(-1 * tank.Direction.X * (MaxCoordinate - (TankSpeed - Math.Abs(borderLoc - tank.Location.X))),
                                                 tank.Location.Y);
             }
             else if (t == typeof(Wall))         // Move up to the border of the wall object
             {
-                var wall = obj as Wall;
-                if (wall.isHorizontal)
-                    if (cmd.Movement[0] == 'u' || cmd.Movement[0] == 'd')
-                        tank.Location = new Vector2D(tank.Location.X,
-                                                wall.PUp.Y + (TankSpeed / modLoc.Y) * (TankSize + WallSize) / 2);
-                    else if ((wall.PUp - newLoc).Length() < (wall.PLow - newLoc).Length())
-                        tank.Location = new Vector2D(wall.PUp.X + (TankSpeed / modLoc.X) * (TankSize + WallSize) / 2,
-                                                        tank.Location.Y);
-                    else
-                        tank.Location = new Vector2D(wall.PLow.X + (TankSpeed / modLoc.X) * (TankSize + WallSize) / 2,
-                                                        tank.Location.Y);
-                else
-                    if (cmd.Movement[0] == 'l' || cmd.Movement[0] == 'r')
-                    tank.Location = new Vector2D(wall.PUp.X + (TankSpeed / modLoc.X) * (TankSize + WallSize) / 2,
-                                                    tank.Location.Y);
-                else if ((wall.PUp - newLoc).Length() < (wall.PLow - newLoc).Length())
-                    tank.Location = new Vector2D(tank.Location.X,
-                                            wall.PUp.Y + (TankSpeed / modLoc.Y) * (TankSize + WallSize) / 2);
-                else
-                    tank.Location = new Vector2D(tank.Location.X,
-                                            wall.PLow.Y + (TankSpeed / modLoc.Y) * (TankSize + WallSize) / 2);
+                return;
+                // var wall = obj as Wall;
+                // if (wall.IsHorizontal)
+                //     if (cmd.Movement[0] == 'u' || cmd.Movement[0] == 'd')
+                //         tank.Location = new Vector2D(tank.Location.X,
+                //                                 wall.PUp.Y + -tank.Direction.Y * ((TankSize + WallSize) / 2 + TankSpeed));
+                //     else if ((wall.PUp - newLoc).Length() < (wall.PLow - newLoc).Length())
+                //         tank.Location = new Vector2D(wall.PUp.X + -tank.Direction.X * ((TankSize + WallSize) / 2 + TankSpeed),
+                //                                         tank.Location.Y);
+                //     else
+                //         tank.Location = new Vector2D(wall.PLow.X + -tank.Direction.X * ((TankSize + WallSize) / 2 + TankSpeed),
+                //                                         tank.Location.Y);
+                // else
+                //     if (cmd.Movement[0] == 'l' || cmd.Movement[0] == 'r')
+                //     tank.Location = new Vector2D(wall.PUp.X + -tank.Direction.X * ((TankSize + WallSize) / 2 + TankSpeed),
+                //                                     tank.Location.Y);
+                // else if ((wall.PUp - newLoc).Length() < (wall.PLow - newLoc).Length())
+                //     tank.Location = new Vector2D(tank.Location.X,
+                //                             wall.PUp.Y + -tank.Direction.Y * (TankSize + WallSize) / 2 + TankSpeed);
+                // else
+                //     tank.Location = new Vector2D(tank.Location.X,
+                //                             wall.PLow.Y + -tank.Direction.Y * (TankSize + WallSize) / 2 + TankSpeed);
             }
 
         }
@@ -298,13 +304,16 @@ namespace TankWars.Server.Model
         /// <param name="playerName">A string to be used as the player's name</param>
         public bool CreateNewPlayer(int id, string playerName)
         {
-            var tank = new Tank(id, playerName, RespawnDelay);
+            var tank = new Tank(id, playerName);
+            bool success;
             lock (this)
             {
-                Tanks.Add(id, tank);
                 tank.HasJoined = true;
-                return SpawnTank(tank);
+                success = SpawnTank(tank);
+                if (success)
+                    Tanks.Add(tank);
             }
+            return success;
         }
 
 
@@ -362,6 +371,7 @@ namespace TankWars.Server.Model
             return false;
         }
 
+
         /// <summary>
         /// Accept a new command created by a client to be excecuted
         /// </summary>
@@ -381,13 +391,15 @@ namespace TankWars.Server.Model
             }
         }
 
+
         /// <summary>
         /// Returns a collection of all walls in the world
         /// </summary>
         /// <returns></returns>
-        public IEnumerable<Wall> GetWalls()
+        public IEnumerable<string> GetWalls()
         {
-            return Walls.Values.AsEnumerable() as IEnumerable<Wall>;
+            foreach (Wall wall in Walls.Values)
+                yield return wall.ToString();
         }
 
     }

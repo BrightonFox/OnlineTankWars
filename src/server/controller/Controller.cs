@@ -42,6 +42,7 @@ namespace TankWars.Server.Control
     {
 
         private static readonly Regex MsgSplitPattern = new Regex(@"(?<=[\n])");
+        private static readonly Regex InitMsgPattern = new Regex(@"^([^\n\r\t]{3,16})\n");
         private TcpListener tcpListener;
         private Dictionary<long, SocketState> Clients = new Dictionary<long, SocketState>();
         private World world;
@@ -70,14 +71,16 @@ namespace TankWars.Server.Control
 
 
         /// <summary>
-        /// 
+        /// Do all the things that should happen every frame.
         /// </summary>
         private void GameLoop()
         {
             Stopwatch watch = new Stopwatch();
+
             while (running)
             {
-                while (watch.ElapsedMilliseconds < world.MSPerFrame)
+                watch.Start();
+                while (watch.ElapsedMilliseconds < World.MSPerFrame)
                 {/* DO NOTHING */}
                 watch.Reset();
 
@@ -88,27 +91,38 @@ namespace TankWars.Server.Control
 
 
         /// <summary>
-        /// 
+        /// TODO: Give this a description...
         /// </summary>
         private void SendFrame()
         {
-            long[] clientIds = new long[Clients.Count];
-            Clients.Keys.CopyTo(clientIds, 0);
+            // long[] clientIds = new long[Clients.Count];
+            // Clients.Keys.CopyTo(clientIds, 0);
             string frame;
             lock (world)
             {
                 frame = world.NextFrame();
             }
-            foreach (long id in clientIds)
+            lock (Clients)
             {
-                if (Clients[id].TheSocket.Connected)
-                    Networking.Send(Clients[id].TheSocket, frame);
-                else
-                    lock (Clients)
+                foreach (SocketState client in Clients.Values)
+                    if (client.TheSocket.Connected)
                     {
-                        Clients.Remove(id);
+                        if (!Networking.Send(client.TheSocket, frame))
+                            ClientDisconnected(true, client, $"\n ERROR: Failed to Send frame to client (id: {client.ID}) !!  [Server.Controller.SendFrame]\n");
                     }
+                    else
+                        ClientDisconnected(false, client, $"Client (Player: {client.ID}) has Disconencted");
             }
+        }
+
+        private void ClientDisconnected(bool error, SocketState client, string disconnectMsg)
+        {
+            Clients.Remove(client.ID);
+            world.RemovePlayer((int)client.ID);
+            if (error)
+                OnNetworkError(disconnectMsg);
+            else
+                OnMessageLog(disconnectMsg);
         }
 
 
@@ -118,7 +132,7 @@ namespace TankWars.Server.Control
         /// On a connection attempt calls <see cref="OnClientConnection"/>
         ///   via <see cref="SocketState.OnNetworkAction"/> method.
         /// </summary>
-        public void StartServer(String settingsFileDir="TODO: Figure out where the settings file will be...")
+        public void StartServer(String settingsFileDir = "TODO: Figure out where the settings file will be...")
         {
             Send = Networking.Send;
 
@@ -140,7 +154,7 @@ namespace TankWars.Server.Control
             {
                 OnNetworkError(state.ErrorMessage);
                 if (state.TheSocket != null)
-                    Networking.SendAndClose(state.TheSocket, " \n");
+                    Networking.SendAndClose(state.TheSocket, state.ErrorMessage + "  [Server.Controller.OnClientConnection]\n");
             }
             else
             {
@@ -157,22 +171,47 @@ namespace TankWars.Server.Control
         /// </summary>
         private void ClientSetup(SocketState state)
         {
-            if (!world.CreateNewPlayer((int)state.ID, state.GetData()))
-                // failed to place new players tank disconencting from client !!
-                Networking.SendAndClose(state.TheSocket, "ERROR: Failed to create tank !! \n");
+            var temp = state.GetData();
+            var match = InitMsgPattern.Match(temp);
 
-            Networking.Send(state.TheSocket, $"{state.ID}\n{world.Size}\n");
-
-            foreach (Wall wall in world.GetWalls())
+            if (!match.Success)
             {
-                Networking.Send(state.TheSocket, wall.ToString());
+                // failed to parse palyer name from client !!
+                Networking.SendAndClose(state.TheSocket, "ERROR: Failed Read Player Name !! \n");
+                OnNetworkError($"ERROR: Failed Read Player Name '{temp.Remove('\n')}'  !!  [Server.Controller.ClientSetup] \n");
+                return;
             }
 
+            var playerName = match.Groups[1].Value;
+            state.ClearData();
+
+            if (!world.CreateNewPlayer((int)state.ID, playerName))
+            {
+                // failed to place new players tank disconencting from client !!
+                Networking.SendAndClose(state.TheSocket, "ERROR: Failed to create tank !! \n");
+                OnNetworkError($"ERROR: Failed to create tank for '{playerName}':{state.ID}  !!  [Server.Controller.ClientSetup] \n");
+                return;
+            }
+
+
+            // - Send Player ID and WorldSize to Client ----
+            Networking.Send(state.TheSocket, $"{state.ID}\n{world.Size}\n");
+
+            // - Send Player the wall configuration ----
+            foreach (string wall in world.GetWalls())
+            {
+                Networking.Send(state.TheSocket, wall);
+            }
+
+            // - Add client to list of active clients ----
             lock (Clients)
             {
                 Clients.Add(state.ID, state);
             }
 
+            OnMessageLog($"Player {state.ID}: '{playerName}' Connected successfully");  // log the successfull connection 
+
+            // - Continue to regular networking receive loop ----
             state.OnNetworkAction = ReceiveClientCommand;
             Networking.GetData(state);
         }
@@ -199,28 +238,26 @@ namespace TankWars.Server.Control
         /// </summary>
         private void ReceiveClientCommand(SocketState state)
         {
-            if (state.ErrorOccured)
-                OnNetworkError(state.ErrorMessage);
+            if (state.ErrorOccured && state.TheSocket.Connected)
+                OnNetworkError("ERROR:    [Server.Controller.ReceiveClientCommand]\n    " + state.ErrorMessage + "\n");
             var temp = state.GetData();
             var msgs = MsgSplitPattern.Split(temp);
             try
             {
-                if (msgs.Length >= 1 && msgs[0][msgs[0].Length - 1] == '\n')
+                if (msgs.Length >= 1 && msgs[0].Length > 1 && msgs[0][msgs[0].Length - 1] == '\n')
                 {
                     world.RegisterCommand((int)state.ID, msgs[0]);
-                    state.RemoveData(0, msgs[0].Length);
-                    for (int ii = 1; ii < msgs.Length; ii++)
-                        if (msgs.Length > 1 && msgs[0][msgs[0].Length - 1] != '\n')
+                    for (int ii = 0; ii < msgs.Length; ii++)
+                        if (msgs[ii].Length >= 1 && msgs[ii][msgs[ii].Length - 1] == '\n')
                             state.RemoveData(0, msgs[ii].Length);
                 }
             }
             catch (Exception ex)
             {
-                OnNetworkError("ERROR: " + ex.Message);
+                OnNetworkError("ERROR: " + ex.Message + "  [Server.Controller.ReceiveClientCommand] \n");
             }
             Networking.GetData(state);
         }
     }
-
-    
 }
+

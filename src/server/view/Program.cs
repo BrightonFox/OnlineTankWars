@@ -34,7 +34,7 @@ namespace TankWars.Server
             var running = true;
             while (running)
             {
-                if (Console.ReadLine() == "Stop")
+                if (Console.ReadLine().ToLower() == "stop")
                 {
                     ctrl.StopServer();
                     running = false;
@@ -44,7 +44,7 @@ namespace TankWars.Server
 
         private static void LogMessage(string msg)
         {
-            Console.Write(msg);
+            Console.WriteLine(msg);
         }
 
         private static void LogErrorMessage(string msg)
