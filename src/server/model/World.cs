@@ -35,6 +35,7 @@ namespace TankWars.Server.Model
         public World(string fileDir) : base(2000)
         {
             SetDefaultValues();
+            ReadSettings(fileDir);
         }
 
 
@@ -165,7 +166,7 @@ namespace TankWars.Server.Model
             var pow = new Powerup(id);
 
             // - Figure out powerup location ----
-            var loc = GetRandomValidLocation(pow, 0);
+            var loc = GetRandomValidLocation(pow, 2);
 
             if (loc == null)    // failed to get a location and therefore create a powerup
                 return;
@@ -270,30 +271,43 @@ namespace TankWars.Server.Model
             }
             else if (t == typeof(Wall))         // Move up to the border of the wall object
             {
-                return;
-                // var wall = obj as Wall;
-                // if (wall.IsHorizontal)
-                //     if (cmd.Movement[0] == 'u' || cmd.Movement[0] == 'd')
-                //         tank.Location = new Vector2D(tank.Location.X,
-                //                                 wall.PUp.Y + -tank.Direction.Y * ((TankSize + WallSize) / 2 + TankSpeed));
-                //     else if ((wall.PUp - newLoc).Length() < (wall.PLow - newLoc).Length())
-                //         tank.Location = new Vector2D(wall.PUp.X + -tank.Direction.X * ((TankSize + WallSize) / 2 + TankSpeed),
-                //                                         tank.Location.Y);
-                //     else
-                //         tank.Location = new Vector2D(wall.PLow.X + -tank.Direction.X * ((TankSize + WallSize) / 2 + TankSpeed),
-                //                                         tank.Location.Y);
-                // else
-                //     if (cmd.Movement[0] == 'l' || cmd.Movement[0] == 'r')
-                //     tank.Location = new Vector2D(wall.PUp.X + -tank.Direction.X * ((TankSize + WallSize) / 2 + TankSpeed),
-                //                                     tank.Location.Y);
-                // else if ((wall.PUp - newLoc).Length() < (wall.PLow - newLoc).Length())
-                //     tank.Location = new Vector2D(tank.Location.X,
-                //                             wall.PUp.Y + -tank.Direction.Y * (TankSize + WallSize) / 2 + TankSpeed);
-                // else
-                //     tank.Location = new Vector2D(tank.Location.X,
-                //                             wall.PLow.Y + -tank.Direction.Y * (TankSize + WallSize) / 2 + TankSpeed);
+                var wall = obj as Wall;
+                switch (cmd.Movement)
+                {
+                    case "up":
+                        tank.Location = new Vector2D(tank.Location.X,       // match tank top border to wall bottom border
+                                                wall.PUp.Y + -tank.Direction.Y * ((TankSize) / 2 + 1 /*+ TankSpeed*/));
+                        break;
+                    case "down":
+                        tank.Location = new Vector2D(tank.Location.X,       // match tank bottom border to wall top border
+                                                wall.PLow.Y + -tank.Direction.Y * ((TankSize) / 2 + 1 /*+ TankSpeed*/));
+                        break;
+                    case "left":
+                        tank.Location = new Vector2D(wall.PUp.X + -tank.Direction.X * ((TankSize) / 2 + 1 /*+ TankSpeed*/),
+                                                        tank.Location.Y);       // match tank left border to wall right border
+                        break;
+                    case "right":
+                        tank.Location = new Vector2D(wall.PLow.X + -tank.Direction.X * ((TankSize) / 2 + 1 /*+ TankSpeed*/),
+                                                        tank.Location.Y);       // match tank right border to wall left border
+                        break;
+                }
             }
-
+            else if (t == typeof(Projectile))           // allow tanks to drive through their own projectiles and colide with enemies'
+            {
+                var proj = obj as Projectile;
+                tank.Location = newLoc;
+                if (proj.OwnerId == tank.Id)
+                    return;
+                
+                proj.IsDead = true;
+                if (--tank.Health > 0)
+                    return;
+                
+                // - player died ----
+                if (Tanks.Keys.Contains(proj.OwnerId))
+                    ((Tank)Tanks[proj.OwnerId]).Score++;
+                tank.IsDead = true;
+            }
         }
 
 

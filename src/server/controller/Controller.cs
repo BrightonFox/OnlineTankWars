@@ -52,7 +52,7 @@ namespace TankWars.Server.Control
         private SendHandler Send;
 
 
-        public event NetworkErrorOccuredHandler OnNetworkError;
+        public event NetworkErrorOccuredHandler OnErrorLog;
         public event MessageLogHandler OnMessageLog;
 
 
@@ -108,19 +108,23 @@ namespace TankWars.Server.Control
                     if (client.TheSocket.Connected)
                     {
                         if (!Networking.Send(client.TheSocket, frame))
-                            ClientDisconnected(true, client, $"\n ERROR: Failed to Send frame to client (id: {client.ID}) !!  [Server.Controller.SendFrame]\n");
+                            ClientDisconnected(true, client, $"\nERROR: Failed to Send frame to client (id: {client.ID}) !!  [Server.Controller.SendFrame]\n");
                     }
                     else
                         ClientDisconnected(false, client, $"Client (Player: {client.ID}) has Disconencted");
             }
         }
 
+
+        /// <summary>
+        /// TODO: Document me!
+        /// </summary>
         private void ClientDisconnected(bool error, SocketState client, string disconnectMsg)
         {
             Clients.Remove(client.ID);
             world.RemovePlayer((int)client.ID);
             if (error)
-                OnNetworkError(disconnectMsg);
+                OnErrorLog(disconnectMsg);
             else
                 OnMessageLog(disconnectMsg);
         }
@@ -132,15 +136,23 @@ namespace TankWars.Server.Control
         /// On a connection attempt calls <see cref="OnClientConnection"/>
         ///   via <see cref="SocketState.OnNetworkAction"/> method.
         /// </summary>
-        public void StartServer(String settingsFileDir = "TODO: Figure out where the settings file will be...")
+        public void StartServer(String settingsFileDir = /*"../../.*/"./res/settings.xml")
         {
             Send = Networking.Send;
 
-            world = new World(settingsFileDir);
+            try
+            {
+                world = new World(settingsFileDir);
+            }
+            catch (Exception ex)
+            {
+                OnErrorLog($"Error:    [Server.Controller.StartServer]\n {ex.Message}");
+            }
 
             tcpListener = Networking.StartServer(OnClientConnection, 11000);
 
             running = true;
+            OnMessageLog("Server started, awaiting clients...");
             new Thread(GameLoop).Start();
         }
 
@@ -152,9 +164,9 @@ namespace TankWars.Server.Control
         {
             if (state.ErrorOccured)
             {
-                OnNetworkError(state.ErrorMessage);
+                OnErrorLog(state.ErrorMessage);
                 if (state.TheSocket != null)
-                    Networking.SendAndClose(state.TheSocket, state.ErrorMessage + "  [Server.Controller.OnClientConnection]\n");
+                    Networking.SendAndClose(state.TheSocket, state.ErrorMessage + "  [Server.Controller.OnClientConnection]");
             }
             else
             {
@@ -178,7 +190,7 @@ namespace TankWars.Server.Control
             {
                 // failed to parse palyer name from client !!
                 Networking.SendAndClose(state.TheSocket, "ERROR: Failed Read Player Name !! \n");
-                OnNetworkError($"ERROR: Failed Read Player Name '{temp.Remove('\n')}'  !!  [Server.Controller.ClientSetup] \n");
+                OnErrorLog($"ERROR: Failed Read Player Name '{temp.Remove('\n')}'  !!  [Server.Controller.ClientSetup]");
                 return;
             }
 
@@ -189,7 +201,7 @@ namespace TankWars.Server.Control
             {
                 // failed to place new players tank disconencting from client !!
                 Networking.SendAndClose(state.TheSocket, "ERROR: Failed to create tank !! \n");
-                OnNetworkError($"ERROR: Failed to create tank for '{playerName}':{state.ID}  !!  [Server.Controller.ClientSetup] \n");
+                OnErrorLog($"ERROR: Failed to create tank for '{playerName}':{state.ID}  !!  [Server.Controller.ClientSetup]");
                 return;
             }
 
@@ -239,7 +251,7 @@ namespace TankWars.Server.Control
         private void ReceiveClientCommand(SocketState state)
         {
             if (state.ErrorOccured && state.TheSocket.Connected)
-                OnNetworkError("ERROR:    [Server.Controller.ReceiveClientCommand]\n    " + state.ErrorMessage + "\n");
+                OnErrorLog("ERROR:    [Server.Controller.ReceiveClientCommand]\n    " + state.ErrorMessage);
             var temp = state.GetData();
             var msgs = MsgSplitPattern.Split(temp);
             try
@@ -254,7 +266,7 @@ namespace TankWars.Server.Control
             }
             catch (Exception ex)
             {
-                OnNetworkError("ERROR: " + ex.Message + "  [Server.Controller.ReceiveClientCommand] \n");
+                OnErrorLog("ERROR: " + ex.Message + "  [Server.Controller.ReceiveClientCommand]");
             }
             Networking.GetData(state);
         }

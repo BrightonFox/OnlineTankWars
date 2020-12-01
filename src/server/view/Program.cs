@@ -27,7 +27,7 @@ namespace TankWars.Server
         {
             var ctrl = new Controller();
             ctrl.OnMessageLog += LogMessage;
-            ctrl.OnNetworkError += LogErrorMessage;
+            ctrl.OnErrorLog += LogErrorMessage;
 
             ctrl.StartServer();
 
@@ -49,7 +49,7 @@ namespace TankWars.Server
 
         private static void LogErrorMessage(string msg)
         {
-            Console.WriteLine("\n>>>>>>>>>>  !! ERROR !!\n" + msg);
+            Console.WriteLine("\n>>>>>>>>>>     !! ERROR !!\n" + msg + "\n<<<<<<<<<<");
         }
     }
 }

@@ -27,11 +27,22 @@ namespace TankWars.Server.Model
         public Wall(Vector2D p1, Vector2D p2) : base()
         {
             _id = nextId++;
-            IsHorizontal = p1.Y==p2.Y;
-            if (IsHorizontal)
-                (PUp, PLow) = (p1.X > p2.X) ? (p1, p2) : (p2, p1);
-            else
-                (PUp, PLow) = (p1.Y > p2.Y) ? (p1, p2) : (p2, p1);
+            _p1 = p1;
+            _p2 = p2;
+
+            // verifies that the provided walls are axis aligned an a multiple of the wallSize
+            if (p1.Y == p2.Y)
+            {
+                if (Math.Abs(p1.X - p2.X) % World.WallSize != 0 || Math.Abs(p1.Y - p2.Y) % World.WallSize != 0)
+                    throw new Exception($"Error: the provided points are not defining a wall with a length divisible by {World.WallSize} !!  [Server.Model.Wall.Constructor]");
+            }
+            else if (p1.X != p2.X)
+                throw new ArgumentException($"Error: the provided points do not create an axis-aligned wall !!  [Server.Model.Wall.Constructor]");
+
+            // assign the upper-right and lower-left coordinates of the wall for collision detection
+            var pMod = new Vector2D(World.WallSize/2, World.WallSize/2);
+            PUp = new Vector2D(Math.Max(p1.X, p2.X), Math.Max(p1.Y, p2.Y)) + pMod;
+            PLow = new Vector2D(Math.Min(p1.X, p2.X), Math.Min(p1.Y, p2.Y)) + (pMod * -1);
         }
 
 
@@ -49,14 +60,14 @@ namespace TankWars.Server.Model
         ///  dependent on if the wall <see cref="isHorisonatal"/> 
         /// (then upper x or vise versa)
         /// </summary>
-        public Vector2D PUp { get { return _p1; } private set { _p1 = value; } }
+        public Vector2D PUp { get; private set; }
 
         /// <summary>
         /// The point that contains either the lower x/y coordinate fo the wall 
         ///  dependent on if the wall <see cref="isHorisonatal"/> 
         /// (then lower x or vise versa)
         /// </summary>
-        public Vector2D PLow { get { return _p2; } private set { _p2 = value; } }
+        public Vector2D PLow { get; private set; }
         
     }
 }

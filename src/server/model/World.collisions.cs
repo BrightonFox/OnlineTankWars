@@ -52,30 +52,9 @@ namespace TankWars.Server.Model
 
             // - Check Collision with wall ----
             foreach (Wall wall in Walls.Values)
-                if (wall.IsHorizontal)
-                {
-                    if (loc.X < wall.PUp.X + WallSize / 2 && loc.X > wall.PLow.X - WallSize / 2)
-                    {
-                        if (Math.Abs(loc.Y - wall.PUp.Y) <= WallSize / 2 + radius)
-                            return wall;
-                    }
-                    else if (loc.Y < wall.PUp.Y + WallSize / 2 && loc.Y > wall.PLow.Y - WallSize / 2) 
-                        if (Math.Abs(loc.X - wall.PUp.X) <= WallSize / 2 + radius ||
-                                Math.Abs(loc.X - wall.PLow.X) <= WallSize / 2 + radius)
-                            return wall;
-                }
-                else
-                {
-                    if (loc.Y < wall.PUp.Y + WallSize / 2 && loc.Y > wall.PLow.Y - WallSize / 2)
-                    {
-                        if (Math.Abs(loc.X - wall.PUp.X) <= WallSize / 2 + radius)
-                            return wall;
-                    }
-                    else if (loc.X < wall.PUp.X + WallSize / 2 && loc.X > wall.PLow.X - WallSize / 2)
-                        if (Math.Abs(loc.Y - wall.PUp.Y) <= WallSize / 2 + radius ||
-                                Math.Abs(loc.Y - wall.PLow.Y) <= WallSize / 2 + radius)
-                            return wall;
-                }
+                if (loc.X < wall.PUp.X + radius + 1 && loc.X > wall.PLow.X - radius + 1 &&
+                        loc.Y < wall.PUp.Y + radius + 1 && loc.Y > wall.PLow.Y - radius + 1)
+                    return wall;
 
             // - Check Tank collision ----
             if (type != typeof(Tank))
@@ -106,7 +85,9 @@ namespace TankWars.Server.Model
             return null;
         }
 
-
+        /// <summary>
+        /// Checks if two circles overlap.
+        /// </summary>
         private bool isCollision(Vector2D loc1, int r1, Vector2D loc2, int r2)
         {
             return (loc1 - loc2).Length() <= r1 + r2;
@@ -115,7 +96,9 @@ namespace TankWars.Server.Model
 
         /// <summary>
         /// Attempts to find a random location in the world that the passed
-        /// <paramref name="obj"/> can spawn without collisions. 
+        /// <paramref name="obj"/> can spawn without collisions. Will attempt to find a
+        /// location <see cref="World.MaxSpawnAttempts"/> times before stopping the search,
+        ///   and will then return <c>null</c>.
         /// </summary>
         private Vector2D GetRandomValidLocation(object obj, int radius)
         {
