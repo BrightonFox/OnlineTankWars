@@ -10,10 +10,11 @@ using System.ComponentModel;
  *   Semester: Fall 2020
  * 
  * Version Data: 
- *   + <>
- * 
+ *   + v1.0 - submittal - 2020/12/2
+ *   
  * About:
- *   <>
+ *   The controller for the TankWars server,
+ *   It handles network communications with each client.
  */
 
 using System;
@@ -28,16 +29,17 @@ using TankWars.NetworkUtil;
 
 namespace TankWars.Server.Control
 {
+
     /// <summary>
-    /// The delegate used for Network error events registered in the TankWars Controller
+    /// The delegate used for information that should be displayed to the console, such as errors and networking events.
     /// </summary>
-    /// <param name="msg">a string containing information about the error that occured</param>
-    public delegate void NetworkErrorOccuredHandler(string msg);
+    /// <param name="msg">a string containing information about the event that occured</param>
+    public delegate void LogEventHandler(string msg);
 
-
-    public delegate void MessageLogHandler(string msg);
-
-
+    /// <summary>
+    /// The controller of a TankWars server. Main job
+    /// is to handle network communications with all clients.
+    /// </summary>
     public class Controller
     {
 
@@ -51,13 +53,38 @@ namespace TankWars.Server.Control
 
         private SendHandler Send;
 
+        /// <summary>
+        /// The port that this server uses.
+        /// </summary>
+        public int ServerPort {get; private set;}
 
-        public event NetworkErrorOccuredHandler OnErrorLog;
-        public event MessageLogHandler OnMessageLog;
+        /// <summary>
+        /// The file path to the settings file that this server uses.
+        /// </summary>
+        public string SettingsFilePath {get; private set;}
 
+        /// <summary>
+        /// This event is triggered on errors, 
+        ///  with a message that the view should display how it sees fit to display error messages.
+        /// </summary>
+        public event LogEventHandler OnErrorLog;
+        
+        /// <summary>
+        /// This event is triggered whenever the server wants to send a message 
+        ///  that should be logged to the view.
+        /// </summary>
+        public event LogEventHandler OnMessageLog;
 
-        public Controller()
+        /// <summary>
+        /// Create the controller for a server application.
+        /// Designed for the TankWars game.
+        /// </summary>
+        /// <param name="settingsFilePath">Optional file path to a settings xml file for congigring the server</param>
+        /// <param name="port">Optional port number for the server to use. (note the v1 clients can't change their port so you shouldn't change it either.</param>
+        public Controller(String settingsFilePath = "../../../../../../res/settings.xml", int port = 11000)
         {
+            ServerPort = port;
+            SettingsFilePath = settingsFilePath;
         }
 
 
@@ -91,7 +118,8 @@ namespace TankWars.Server.Control
 
 
         /// <summary>
-        /// TODO: Give this a description...
+        /// Sends a "frame" containing all objects in the world as
+        /// JSON objects in strings to each client connected to the server. 
         /// </summary>
         private void SendFrame()
         {
@@ -108,16 +136,17 @@ namespace TankWars.Server.Control
                     if (client.TheSocket.Connected)
                     {
                         if (!Networking.Send(client.TheSocket, frame))
-                            ClientDisconnected(true, client, $"\nERROR: Failed to Send frame to client (id: {client.ID}) !!  [Server.Controller.SendFrame]\n");
+                            ClientDisconnected(true, client, $"ERROR: Failed to Send frame to client (id: {client.ID}) !!  [Server.Controller.SendFrame]\n");
                     }
                     else
-                        ClientDisconnected(false, client, $"Client (Player: {client.ID}) has Disconencted");
+                        ClientDisconnected(false, client, $"Player (id: {client.ID}) has Disconencted");
             }
         }
 
 
         /// <summary>
-        /// TODO: Document me!
+        /// Do all the things that need to be done when a client disconnects from the server.
+        /// !! Should always be called form within a lock on <see cref="Controller.Clients"/> !! 
         /// </summary>
         private void ClientDisconnected(bool error, SocketState client, string disconnectMsg)
         {
@@ -136,20 +165,20 @@ namespace TankWars.Server.Control
         /// On a connection attempt calls <see cref="OnClientConnection"/>
         ///   via <see cref="SocketState.OnNetworkAction"/> method.
         /// </summary>
-        public void StartServer(String settingsFileDir = /*"../../.*/"./res/settings.xml")
+        public void StartServer()
         {
             Send = Networking.Send;
 
             try
             {
-                world = new World(settingsFileDir);
+                world = new World(SettingsFilePath);
             }
             catch (Exception ex)
             {
                 OnErrorLog($"Error:    [Server.Controller.StartServer]\n {ex.Message}");
             }
 
-            tcpListener = Networking.StartServer(OnClientConnection, 11000);
+            tcpListener = Networking.StartServer(OnClientConnection, ServerPort);
 
             running = true;
             OnMessageLog("Server started, awaiting clients...");
@@ -190,7 +219,7 @@ namespace TankWars.Server.Control
             {
                 // failed to parse palyer name from client !!
                 Networking.SendAndClose(state.TheSocket, "ERROR: Failed Read Player Name !! \n");
-                OnErrorLog($"ERROR: Failed Read Player Name '{temp.Remove('\n')}'  !!  [Server.Controller.ClientSetup]");
+                OnErrorLog($"ERROR: Failed Read Player Name '{temp.Replace('\n', ' ')}'  !!  [Server.Controller.ClientSetup]");
                 return;
             }
 
@@ -256,12 +285,12 @@ namespace TankWars.Server.Control
             var msgs = MsgSplitPattern.Split(temp);
             try
             {
-                if (msgs.Length >= 1 && msgs[0].Length > 1 && msgs[0][msgs[0].Length - 1] == '\n')
+                if (msgs.Length >= 1 && msgs[0].Length > 1 && msgs[0][msgs[0].Length - 1] == '\n')      // verify that a complete command has been received
                 {
                     world.RegisterCommand((int)state.ID, msgs[0]);
                     for (int ii = 0; ii < msgs.Length; ii++)
-                        if (msgs[ii].Length >= 1 && msgs[ii][msgs[ii].Length - 1] == '\n')
-                            state.RemoveData(0, msgs[ii].Length);
+                        if (msgs[ii].Length >= 1 && msgs[ii][msgs[ii].Length - 1] == '\n')      // clear out received command and any other
+                            state.RemoveData(0, msgs[ii].Length);                               // complete commands received on this same frame
                 }
             }
             catch (Exception ex)

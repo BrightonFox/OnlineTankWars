@@ -11,7 +11,11 @@ using System.Collections.Generic;
  *   Semester: Fall 2020
  * 
  * Version Data: 
- *   + ...
+ *   + v1.0 - submittal - 2020/12/2
+ *   
+ * About:
+ *   Holds the values and file reader for the user-editable
+ *   settings of a world.
  */
 
 using System;
@@ -24,31 +28,85 @@ namespace TankWars.Server.Model
 {
     public partial class World
     {
+
+        /// <summary>
+        /// How often the server attempts to update the world in milliseconds.
+        /// The default is 17 (60 fps).
+        /// </summary>
         public static int MSPerFrame { get; private set; }
 
+        /// <summary>
+        /// The maximum delay between spawning new powerups. After spawning a
+        /// powerup,the server picks a random number of frames less than this
+        /// number before trying to spawn another.
+        /// The default is 1650 frames.
+        /// </summary>
         public static int MaxPowerupDelay { get; private set; }
 
+        /// <summary>
+        /// The number of powerups can be in the world at any time.
+        /// The default is 2.
+        /// </summary>
         public static int MaxPowerups { get; private set; }
 
+        /// <summary>
+        /// The number of "hit points" <see cref="Tank"/>s/players start with.
+        /// The default is 3.
+        /// </summary>
         public static int StartingHealth { get; private set; }
 
+        /// <summary>
+        /// The units a <see cref="Tank"/> can travel in each frame.
+        /// The default is 3 units per frame.
+        /// </summary>
         public static double TankSpeed { get; private set; }
 
+        /// <summary>
+        /// The units that <see cref="Projectile"/>s will travel in each frame.
+        /// The default is 25 units per frame.
+        /// </summary>
         public static double ProjectileSpeed { get; private set; }
 
+        /// <summary>
+        /// Half of the <see cref="World"/> size, used for easier coordinate determination.
+        /// </summary>
         public static int MaxCoordinate { get; private set; }
 
+        /// <summary> 
+        /// The number of times the server will attempt to spawn any object
+        ///  before giving up due to no valid (empty) spaces being found.
+        /// </summary>
         public static int MaxSpawnAttempts { get; private set; }
 
+        /// <summary>
+        /// The square edge length of the segments that make up a <see cref="Wall"/>l.
+        /// The default is a 50x50 square. 
+        /// This is used for detecting collisions with other objects. 
+        /// </summary>
         public static int WallSize { get; private set; }
 
+        /// <summary>
+        /// The Radius/Square-edge-length 
+        ///  (depending on what other objet the tank is collidign with)
+        ///  defines the area that the <see cref="Tank"/> take up.
+        /// The can be defined in the specifies settign xml file.
+        /// The default is a 60x60 square. 
+        /// This is used for the purposes of detecting collisions with <see cref="Wall"/>s, 
+        ///  <see cref="Beam"/>s, <see cref="Powerup"/>s, and <see cref="Projectiles"/>s.
+        /// </summary>
         public static int TankSize { get; private set; }
 
+        /// <summary>
+        /// The number of frames that must pass before a <see cref="Tank"/> can fire a <see cref="Projectile"/> 
+        /// This is not in units of time. 
+        /// It is in units of frames.
+        /// </summary>
         public static int ProjectileFireDelay { get; private set; }
 
         /// <summary>
-        /// How many frames must a tank wait before respawning? 
+        /// the number of frames a <see cref="Tank"/>/player must wait before respawning.
         /// This is not in units of time. It is in units of frames.
+        /// The default is 300 frames. 
         /// </summary>
         public static int RespawnDelay { get; private set; }
 
@@ -59,12 +117,12 @@ namespace TankWars.Server.Model
         /// </summary>
         private void SetDefaultValues()
         {
-            MSPerFrame = 17; //2000;
+            MSPerFrame = 17;
             MaxPowerups = 2;
             MaxSpawnAttempts = 64;
             MaxPowerupDelay = 1650;
             TankSize = 60;
-            TankSpeed = 3d; //TankSize/2;
+            TankSpeed = 3d;
             WallSize = 50;
             StartingHealth = 3;
             ProjectileSpeed = 25d;
@@ -79,8 +137,9 @@ namespace TankWars.Server.Model
         /// !! Should only be called from the Constructor, 
         ///   after calling <see cref="World.SetDefaultValues"/> !!
         /// <para>
-        /// Reads in a settings xml file.
+        /// Reads in a settings xml file and parses the desired settings to be changed.
         /// </para>
+        /// Allows for alternative xml tag names to be used.
         /// </summary>
         private void ReadSettings(string fileDir)
         {
@@ -214,7 +273,7 @@ namespace TankWars.Server.Model
         }
 
         /// <summary>
-        /// Handle Reading in points/vectors from the xml Setttings location.
+        /// Handle Reading in points/vectors
         /// </summary>
         private Vector2D ReadPoint(XmlReader reader)
         {
@@ -252,7 +311,11 @@ namespace TankWars.Server.Model
     }
 
 
-
+    /// <summary>
+    /// Used to simplify the process of adding a world item with
+    /// an ID to a dictionary with its ID as its key.
+    /// Using Add(gameObject) will run as Add(gameObject.Id, gameObject)
+    /// </summary>
     internal static class DictExtension
     {
         public static void Add(this Dictionary<int, TankWars.JsonObjects.Wall> self, Wall wall)

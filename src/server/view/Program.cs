@@ -8,10 +8,11 @@
  *   Semester: Fall 2020
  * 
  * Version Data: 
- *   + <>
- * 
+ *   + v1.0 - submittal - 2020/12/2
+ *   
  * About:
- *   <>
+ *   A console view of the server running the TankWars game.
+ *   Outputs messages and errors for the user.
  */
 
 using System;

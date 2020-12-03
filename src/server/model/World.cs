@@ -8,10 +8,13 @@
  *   Semester: Fall 2020
  * 
  * Version Data: 
- *   + <>
- * 
+ *   + v1.0 - submittal - 2020/12/2
+ *   
  * About:
- *   <>
+ *   The object representing the TankWars game world as a whole,
+ *    also contains the logic to code the objects help into JSON.
+ *   See the main TankWars World object for the generic version
+ *    shared between the client and the server. 
  */
 
 using System;
@@ -25,13 +28,31 @@ using TankWars.MathUtils;
 
 namespace TankWars.Server.Model
 {
+
+    /// <summary>
+    /// This is the logical workhorse for the TankWars Game!
+    /// It holds a representation of the world, 
+    ///  values for the various settings,
+    ///  and the game logic.
+    /// <para>
+    /// The game logic is agnostic of the amount of time between frames,
+    ///  when <see cref="World.NextFrame"/> is called it just calculates the frame,
+    ///  the controller for the game server determines how long between frames.
+    /// </para>
+    /// NOTE: this does not take into account that <see cref="World.NextFrame"/> might take longer to 
+    ///  calculate a frame than the controller expects it to,
+    ///  in that respect the <see cref="World"/> is not agnostic of the frame rate.
+    /// </summary>
     public partial class World : IWorld
     {
         private Queue<Command> FrameCommands = new Queue<Command>();
         private Random rand = new Random();
 
 
-
+        /// <summary>
+        /// Creates a new world for the TankWars game that holds all objects that exist withing the game.
+        /// </summary>
+        /// <param name="fileDir">A String holding the path to the xml file holding the desired settings for this world</param>
         public World(string fileDir) : base(2000)
         {
             SetDefaultValues();
@@ -40,6 +61,15 @@ namespace TankWars.Server.Model
 
 
         private int _framesTillNextPowerupSpawn;
+        
+        /// <summary>
+        /// The number of frames until a new powerup is spawned.
+        /// <para>
+        /// NOTE: this property automatically decrements this counter every time it's checked,
+        ///  and resets to a new random value less than <see cref="World.MaxPowerupDelay"/>,
+        ///  when it reaches 0.
+        /// </para>
+        /// </summary>
         private int FramesTillNextPowerupSpawn
         {
             get
@@ -179,7 +209,7 @@ namespace TankWars.Server.Model
 
         /// <summary>
         /// Handle creating projectiles and beams.
-        /// For beams process them and append them to the from.
+        /// For beams process them and append them to the frame.
         /// </summary>
         private void HandleFire(Command cmd, Tank tank, StringBuilder frame)
         {
@@ -193,8 +223,8 @@ namespace TankWars.Server.Model
                     }
                     return;
                 case "alt":
-                    if (tank.BeamChargeCount > 0)
-                    {
+                    if (tank.BeamChargeCount > 0)       // Determines if a player can fire a beam, and handles 
+                    {                                   // the logic here, as they will only exist for 1 frame
                         var beam = new Beam(cmd.OwnerId, tank.Location, cmd.Direction);
                         frame.Append(beam);
                         tank.BeamChargeCount--;
@@ -215,7 +245,7 @@ namespace TankWars.Server.Model
 
 
         /// <summary>
-        /// Handle the movement of the tanks.
+        /// Handle the movement and collisions of the tanks.
         /// </summary>
         private void HandleMovement(Command cmd, Tank tank)
         {
@@ -276,23 +306,23 @@ namespace TankWars.Server.Model
                 {
                     case "up":
                         tank.Location = new Vector2D(tank.Location.X,       // match tank top border to wall bottom border
-                                                wall.PUp.Y + -tank.Direction.Y * ((TankSize) / 2 + 1 /*+ TankSpeed*/));
+                                                wall.PUp.Y + -tank.Direction.Y * ((TankSize / 2) + 1));
                         break;
                     case "down":
                         tank.Location = new Vector2D(tank.Location.X,       // match tank bottom border to wall top border
-                                                wall.PLow.Y + -tank.Direction.Y * ((TankSize) / 2 + 1 /*+ TankSpeed*/));
+                                                wall.PLow.Y + -tank.Direction.Y * ((TankSize / 2) + 1));
                         break;
                     case "left":
-                        tank.Location = new Vector2D(wall.PUp.X + -tank.Direction.X * ((TankSize) / 2 + 1 /*+ TankSpeed*/),
+                        tank.Location = new Vector2D(wall.PUp.X + -tank.Direction.X * ((TankSize / 2) + 1),
                                                         tank.Location.Y);       // match tank left border to wall right border
                         break;
                     case "right":
-                        tank.Location = new Vector2D(wall.PLow.X + -tank.Direction.X * ((TankSize) / 2 + 1 /*+ TankSpeed*/),
+                        tank.Location = new Vector2D(wall.PLow.X + -tank.Direction.X * ((TankSize / 2) + 1),
                                                         tank.Location.Y);       // match tank right border to wall left border
                         break;
                 }
             }
-            else if (t == typeof(Projectile))           // allow tanks to drive through their own projectiles and colide with enemies'
+            else if (t == typeof(Projectile))           // allow tanks to drive through their own projectiles and collide with enemies'
             {
                 var proj = obj as Projectile;
                 tank.Location = newLoc;

@@ -8,10 +8,12 @@
  *   Semester: Fall 2020
  * 
  * Version Data: 
- *   + <>
- * 
+ *   + v1.0 - submittal - 2020/12/2
+ *   
  * About:
- *   <>
+ *   An object representing a Projectile that is tied to a
+ *   tank/client. Also contains the logic used to convert the
+ *   projectile into JSON for the clients.
  */
 
 using System;
@@ -23,6 +25,16 @@ namespace TankWars.Server.Model
     public class Projectile : TankWars.JsonObjects.Projectile
     {
         private static int nextId = 0;
+        
+        /// <summary>
+        /// Like <see cref="TankWars.JsonObjects.Projectile"/>, 
+        ///  but extended with logic for the server.
+        /// Autogenerates the <see cref="Projectile.Id"/>, 
+        ///  based upon how many walls have been created before.
+        /// </summary>
+        /// <param name="ownerId">The ID of the Tank that fired the projectile</param>
+        /// <param name="loc">The starting location for the projectile.</param>
+        /// <param name="dir">The direction the projectile should go in.</param>
         public Projectile(int ownerId, Vector2D loc, Vector2D dir) : base()
         {
             _id = nextId++;

@@ -8,10 +8,12 @@
  *   Semester: Fall 2020
  * 
  * Version Data: 
- *   + <>
- * 
+ *   + v1.0 - submittal - 2020/12/2
+ *   
  * About:
- *   <>
+ *   An object representing a Powerup that exists in
+ *   the world. Also contains the logic used to convert
+ *   the Powerup into JSON for the clients.
  */
 
 using System;
@@ -22,6 +24,8 @@ namespace TankWars.Server.Model
     /// <inheritdoc cref="TankWars.JsonObjects.Powerup" />
     public class Powerup : TankWars.JsonObjects.Powerup
     {
+        
+        /// <inheritdoc cref="TankWars.JsonObjects.Powerup.Powerup"/>
         public Powerup(int id) : base()
         {
             _isDead = false;

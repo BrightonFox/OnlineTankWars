@@ -8,10 +8,13 @@
  *   Semester: Fall 2020
  * 
  * Version Data: 
- *   + <>
- * 
+ *   + v1.0 - submittal - 2020/12/2
+ *   
  * About:
- *   <>
+ *   An object representing a Command sent from a client
+ *   to interact with the tank tied to them. Also holds
+ *   the logic needed to deserialize these commands sent
+ *   from the clients.
  */
 
 using System.Text;

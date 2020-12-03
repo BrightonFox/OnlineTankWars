@@ -8,7 +8,11 @@
  *   Semester: Fall 2020
  * 
  * Version Data: 
- *   + ...
+ *   + v1.0 - submittal - 2020/12/2
+ *   
+ * About:
+ *   Holds all the logic necessary to determine if any objects
+ *   in the world are "colliding" on a 2d plane.
  */
 
 using System;
@@ -25,6 +29,7 @@ namespace TankWars.Server.Model
         private static readonly Vector2D V_DOWN = new Vector2D(0, 1);
         private static readonly Vector2D V_LEFT = new Vector2D(-1, 0);
         private static readonly Vector2D V_RIGHT = new Vector2D(1, 0);
+
 
         /// <summary>
         /// Takes in an object (<paramref name="obj"/>), 

@@ -8,10 +8,12 @@
  *   Semester: Fall 2020
  * 
  * Version Data: 
- *   + <>
- * 
+ *   + v1.0 - submittal - 2020/12/2
+ *   
  * About:
- *   <>
+ *   An object representing a Tank in the world that
+ *   is controlled by a client. Also contains the
+ *   logic used to convert the tank into JSON for the clients.
  */
 
 using System;
@@ -24,10 +26,15 @@ namespace TankWars.Server.Model
     public class Tank : TankWars.JsonObjects.Tank
     {
 
+        /// <summary>
+        /// The tank object as the server needs to understand it.
+        /// </summary>
+        /// <param name="id">the ID of the client & tank.</param>
+        /// <param name="playerName">The strign representation of 16 chars that will be displayed as teh player name</param>
         public Tank(int id, string playerName) : base()
         {
             _id = id;
-            _playerName = playerName;
+            _playerName = playerName.Substring(0, (PlayerName.Length>16) ? 16 : PlayerName.Length);
             _bodyDirection = new Vector2D(0, -1);
             _turretDirection = new Vector2D(0, -1);
             BeamChargeCount = 0;
@@ -36,6 +43,16 @@ namespace TankWars.Server.Model
 
 
         private int _framesTillRespawn;
+
+        /// <summary>
+        /// The number of frames a tank must wait before being respawned.
+        /// <para>
+        /// NOTE: this property automatically decrements this counter every time it's checked
+        ///  and <see cref="Tank.Health"/> is 0,
+        ///  and resets to <see cref="World.RespawnDelay"/>,
+        ///  when it reaches 0.
+        /// </para>
+        /// </summary>
         public int FramesTillRespawn
         {
             get
@@ -58,12 +75,17 @@ namespace TankWars.Server.Model
 
 
         private int _turretCoolDown = 0;
+
+        /// <summary>
+        /// The number of frames before the <see cref="Tank"/> 
+        ///  can fire a <see cref="Projectile"/> again.
+        /// </summary>
         public int TurretCoolDown
         {
             get { return _turretCoolDown; }
-            internal set
+            private set
             {
-                if (value <= 0)
+                if (value <= 0)     //stops the cooldown countdown at 0
                 {
                     _turretCoolDown = 0;
                 }
@@ -72,7 +94,10 @@ namespace TankWars.Server.Model
             }
         }
 
-
+        /// <summary>
+        /// States wether the tank is able to fire or not 
+        ///  (determined by <see cref="World.ProjectileFireDelay"/>)
+        /// </summary>
         public bool CanFire
         {
             get
@@ -87,6 +112,10 @@ namespace TankWars.Server.Model
         }
 
 
+        /// <summary>
+        /// Perform all internal tasks that a tank must do every frame.
+        /// For example decrementing the cooldown on <see cref="Tank.TurretCoolDown"/>.
+        /// </summary>
         internal void TickTank()
         {
             TurretCoolDown--;

@@ -168,6 +168,7 @@
             "abcdefghijklmnopqrstuvwxyz",
             "assgn",
             "bdir",
+            "deconstructor",
             "deserializes",
             "disp",
             "isdigit",
@@ -175,6 +176,7 @@
             "netstandard",
             "oster",
             "osterhoutan",
+            "powerups",
             "scriptcs",
             "tdir"
         ],
