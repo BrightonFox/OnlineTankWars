@@ -34,7 +34,7 @@ namespace TankWars.Server.Model
         public Tank(int id, string playerName) : base()
         {
             _id = id;
-            _playerName = playerName.Substring(0, (PlayerName.Length>16) ? 16 : PlayerName.Length);
+            _playerName = playerName.Substring(0, (playerName.Length>16) ? 16 : PlayerName.Length);
             _bodyDirection = new Vector2D(0, -1);
             _turretDirection = new Vector2D(0, -1);
             BeamChargeCount = 0;
